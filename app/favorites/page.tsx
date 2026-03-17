@@ -111,72 +111,74 @@ function FavoritesContent() {
   const totalCards = favorites.reduce((sum, f) => sum + f.cardIds.length, 0)
   
   return (
-    <main className="flex flex-col min-h-[100dvh] bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
-      {/* 顶部 */}
-      <header className="pt-safe px-5 pb-4">
-        <div className="flex items-center justify-between py-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">我的收藏</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {favorites.length} 个收藏夹 · {totalCards} 条内容
-            </p>
+    <>
+      <main className="flex flex-col min-h-[100dvh] bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+        {/* 顶部 */}
+        <header className="pt-safe px-5 pb-4">
+          <div className="flex items-center justify-between py-4">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">我的收藏</h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {favorites.length} 个收藏夹 · {totalCards} 条内容
+              </p>
+            </div>
+            <Button
+              size="icon"
+              onClick={() => setIsCreating(true)}
+              className="rounded-xl h-10 w-10 bg-slate-800 dark:bg-slate-100 hover:bg-slate-700 dark:hover:bg-slate-200"
+            >
+              <Plus className="w-5 h-5 text-white dark:text-slate-800" />
+            </Button>
           </div>
-          <Button
-            size="icon"
-            onClick={() => setIsCreating(true)}
-            className="rounded-xl h-10 w-10 bg-slate-800 dark:bg-slate-100 hover:bg-slate-700 dark:hover:bg-slate-200"
-          >
-            <Plus className="w-5 h-5 text-white dark:text-slate-800" />
-          </Button>
-        </div>
-        {/* 装饰性文字 */}
-        <div className="flex items-center justify-center gap-2 py-3 border-y border-slate-200/60 dark:border-slate-700/60">
-          <div className="w-8 h-px bg-gradient-to-r from-transparent to-slate-300 dark:to-slate-600" />
-          <p className="text-slate-400 dark:text-slate-500 text-xs tracking-widest">
-            你的收藏都会成为你的谈资
-          </p>
-          <div className="w-8 h-px bg-gradient-to-l from-transparent to-slate-300 dark:to-slate-600" />
-        </div>
-        <div className="relative mt-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <Input 
-            placeholder="在收藏中搜索..."
-            className="pl-9 bg-white dark:bg-slate-800/50"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400">
-              <X className="w-4 h-4" />
-            </button>
+          {/* 装饰性文字 */}
+          <div className="flex items-center justify-center gap-2 py-3 border-y border-slate-200/60 dark:border-slate-700/60">
+            <div className="w-8 h-px bg-gradient-to-r from-transparent to-slate-300 dark:to-slate-600" />
+            <p className="text-slate-400 dark:text-slate-500 text-xs tracking-widest">
+              你的收藏都会成为你的谈资
+            </p>
+            <div className="w-8 h-px bg-gradient-to-l from-transparent to-slate-300 dark:to-slate-600" />
+          </div>
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <Input 
+              placeholder="在收藏中搜索..."
+              className="pl-9 bg-white dark:bg-slate-800/50"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* 主内容区: 搜索结果或收藏夹列表 */}
+        <div className="flex-1 px-5 pb-20 overflow-y-auto">
+          {searchQuery ? (
+            <SearchResultsList 
+              results={searchResults} 
+              query={searchQuery}
+              onItemClick={setSelectedCard}
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-3 py-2">
+              <AnimatePresence>
+                {favorites.map((folder) => (
+                  <FolderCard
+                    key={folder.id}
+                    folder={folder}
+                    onEdit={() => setEditingFolder(folder)}
+                    onDelete={() => setDeletingFolderId(folder.id)}
+                    onOpen={() => setViewingFolder(folder)}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
           )}
         </div>
-      </header>
-
-      {/* 主内容区: 搜索结果或收藏夹列表 */}
-      <div className="flex-1 px-5 pb-20 overflow-y-auto">
-        {searchQuery ? (
-          <SearchResultsList 
-            results={searchResults} 
-            query={searchQuery}
-            onItemClick={setSelectedCard}
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-3 py-2">
-            <AnimatePresence>
-              {favorites.map((folder) => (
-                <FolderCard
-                  key={folder.id}
-                  folder={folder}
-                  onEdit={() => setEditingFolder(folder)}
-                  onDelete={() => setDeletingFolderId(folder.id)}
-                  onOpen={() => setViewingFolder(folder)}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-      </div>
+      </main>
 
       {/* 搜索结果点击后的卡片详情弹窗 */}
       <AnimatePresence>
@@ -243,7 +245,7 @@ function FavoritesContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </main>
+    </>
   )
 }
 
