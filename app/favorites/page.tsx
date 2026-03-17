@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, MoreHorizontal, Pencil, Trash2, XCircle, ChevronLeft, ArrowRight, Bookmark, ChevronRight } from 'lucide-react'
+import { Plus, MoreHorizontal, Pencil, Trash2, XCircle, ChevronLeft, ArrowRight, Bookmark, ChevronRight, Search, X } from 'lucide-react'
 import { AppProvider, useApp } from '@/lib/app-context'
 import { BottomNav } from '@/components/bottom-nav'
 import { Button } from '@/components/ui/button'
@@ -49,11 +49,36 @@ import {
 
 
 function FavoritesContent() {
-  const { favorites, createFolder, updateFolder, deleteFolder, isHydrated } = useApp()
+  const { favorites, createFolder, updateFolder, deleteFolder, isHydrated, cards } = useApp()
   const [editingFolder, setEditingFolder] = useState<FavoriteFolder | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [viewingFolder, setViewingFolder] = useState<FavoriteFolder | null>(null)
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Array<typeof cards[0] & { folderName: string, folderColor: string }>>([])
+  const [selectedCard, setSelectedCard] = useState<(typeof cards[0] & { folderName: string, folderColor: string }) | null>(null)
+
+  // 搜索逻辑
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setSearchResults([])
+      return
+    }
+
+    const allFavoriteCards = favorites.flatMap(folder => 
+      folder.cardIds.map(cardId => {
+        const card = cards.find(c => c.id === cardId)
+        return card ? { ...card, folderName: folder.name, folderColor: folder.color } : null
+      })
+    ).filter(Boolean) as Array<typeof cards[0] & { folderName: string, folderColor: string }>
+
+    const results = allFavoriteCards.filter(card => 
+      card.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      card.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      card.source?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    setSearchResults(results)
+  }, [searchQuery, favorites, cards])
 
   if (!isHydrated) {
     return (
@@ -112,81 +137,97 @@ function FavoritesContent() {
           </p>
           <div className="w-8 h-px bg-gradient-to-l from-transparent to-slate-300 dark:to-slate-600" />
         </div>
+        <div className="relative mt-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <Input 
+            placeholder="在收藏中搜索..."
+            className="pl-9 bg-white dark:bg-slate-800/50"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </header>
 
-      {/* 收藏夹列表 */}
+      {/* 主内容区: 搜索结果或收藏夹列表 */}
       <div className="flex-1 px-5 pb-20 overflow-y-auto">
-        <div className="grid grid-cols-1 gap-3 py-2">
-          <AnimatePresence>
-            {favorites.map((folder) => (
-              <FolderCard
-                key={folder.id}
-                folder={folder}
-                onEdit={() => setEditingFolder(folder)}
-                onDelete={() => setDeletingFolderId(folder.id)}
-                onOpen={() => setViewingFolder(folder)}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
+        {searchQuery ? (
+          <SearchResultsList 
+            results={searchResults} 
+            query={searchQuery}
+            onItemClick={setSelectedCard}
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-3 py-2">
+            <AnimatePresence>
+              {favorites.map((folder) => (
+                <FolderCard
+                  key={folder.id}
+                  folder={folder}
+                  onEdit={() => setEditingFolder(folder)}
+                  onDelete={() => setDeletingFolderId(folder.id)}
+                  onOpen={() => setViewingFolder(folder)}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
-      {/* 底部导航 */}
-      <BottomNav />
-
-      {/* 编辑/新建收藏夹弹窗 */}
+      {/* 搜索结果点击后的卡片详情弹窗 */}
       <AnimatePresence>
-        {(isCreating || editingFolder) && (
-          <EditFolderModal
-            folder={editingFolder || undefined}
-            isNew={isCreating}
-            onSave={isCreating ? handleCreateFolder : handleUpdateFolder}
-            onClose={() => {
-              setIsCreating(false)
-              setEditingFolder(null)
-            }}
+        {selectedCard && (
+          <CardDetailModal
+            card={selectedCard}
+            onClose={() => setSelectedCard(null)}
           />
         )}
       </AnimatePresence>
-
-      {/* 收藏夹详情页 */}
-      <AnimatePresence>
-        {viewingFolder && (
-          <FolderDetailView
-            folder={viewingFolder}
-            onClose={() => setViewingFolder(null)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* 删除确认弹窗 */}
-      <AlertDialog open={!!deletingFolderId} onOpenChange={() => setDeletingFolderId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>删除收藏夹</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div>
-                <p>确定要删除「{folderToDelete?.name}」吗？</p>
-                {folderToDelete && folderToDelete.cardIds.length > 0 && (
-                  <p className="mt-2 text-amber-600 dark:text-amber-400 font-medium">
-                    此收藏夹中有 {folderToDelete.cardIds.length} 条内容，删除后将无法恢复。
-                  </p>
-                )}
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteFolder}
-              className="bg-red-500 text-white hover:bg-red-600"
-            >
-              删除
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </main>
+  )
+}
+
+// 搜索结果列表组件
+function SearchResultsList({ 
+  results, 
+  query, 
+  onItemClick 
+}: {
+  results: Array<any>,
+  query: string,
+  onItemClick: (card: any) => void
+}) {
+  if (results.length === 0) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-slate-500 dark:text-slate-400">没有找到与 "{query}" 相关的内容</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3 py-2">
+      <p className="text-sm text-slate-500 dark:text-slate-400 px-1 pb-1">找到 {results.length} 条相关内容</p>
+      {results.map(card => (
+        <motion.div
+          key={card.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => onItemClick(card)}
+          className="bg-white dark:bg-slate-800/50 p-4 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
+        >
+          <p className="text-slate-800 dark:text-slate-100 line-clamp-2">{card.content}</p>
+          <div className="flex items-center gap-2 mt-2 text-xs text-slate-400 dark:text-slate-500">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: card.folderColor }} />
+            <span>{card.folderName}</span>
+          </div>
+        </motion.div>
+      ))}
+    </div>
   )
 }
 
