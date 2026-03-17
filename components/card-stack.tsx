@@ -35,7 +35,12 @@ export function CardStack({ categoryId, cards: allCards }: CardStackProps) {
   const [showFolders, setShowFolders] = useState(false)
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [direction, setDirection] = useState<'up' | 'down' | null>(null)
-  const [motivationQuote] = useState(() => MOTIVATION_QUOTES[Math.floor(Math.random() * MOTIVATION_QUOTES.length)])
+  const [motivationQuote, setMotivationQuote] = useState<string>('')
+
+  useEffect(() => {
+    // 仅在客户端设置随机名言，以避免水合不匹配
+    setMotivationQuote(MOTIVATION_QUOTES[Math.floor(Math.random() * MOTIVATION_QUOTES.length)])
+  }, [])
   
   const dragX = useMotionValue(0)
   const dragY = useMotionValue(0)
