@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/bottom-nav'
 import { Button } from '@/components/ui/button'
 import { FloatingCloseButton } from '@/components/ui/floating-close-button'
 import { Input } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
 import { FolderCard } from './components/folder-card'
 import { EditFolderModal } from './components/edit-folder-modal'
 import { CardDetailModal } from './components/card-detail-modal'
@@ -48,11 +49,19 @@ import {
 
 
 function FavoritesContent() {
-  const { favorites, createFolder, updateFolder, deleteFolder } = useApp()
+  const { favorites, createFolder, updateFolder, deleteFolder, isHydrated } = useApp()
   const [editingFolder, setEditingFolder] = useState<FavoriteFolder | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [viewingFolder, setViewingFolder] = useState<FavoriteFolder | null>(null)
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null)
+
+  if (!isHydrated) {
+    return (
+      <main className="flex flex-col min-h-[100dvh] items-center justify-center">
+        <Spinner />
+      </main>
+    )
+  }
 
   const handleCreateFolder = (name: string, color: string) => {
     createFolder(name, color)

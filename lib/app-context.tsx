@@ -32,6 +32,7 @@ interface AppContextType {
   // 动画相关
   isFavoriting: boolean
   triggerFavoriteAnimation: () => void
+  isHydrated: boolean
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -224,6 +225,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getCardsByCategory,
       isFavoriting,
       triggerFavoriteAnimation,
+      isHydrated,
     }}>
       {children}
       <Toaster />
