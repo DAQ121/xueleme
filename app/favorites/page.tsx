@@ -187,6 +187,62 @@ function FavoritesContent() {
           />
         )}
       </AnimatePresence>
+
+      {/* 底部导航 */}
+      <BottomNav />
+
+      {/* 编辑/新建收藏夹弹窗 */}
+      <AnimatePresence>
+        {(isCreating || editingFolder) && (
+          <EditFolderModal
+            folder={editingFolder || undefined}
+            isNew={isCreating}
+            onSave={isCreating ? handleCreateFolder : handleUpdateFolder}
+            onClose={() => {
+              setIsCreating(false)
+              setEditingFolder(null)
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 收藏夹详情页 */}
+      <AnimatePresence>
+        {viewingFolder && (
+          <FolderDetailView
+            folder={viewingFolder}
+            onClose={() => setViewingFolder(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 删除确认弹窗 */}
+      <AlertDialog open={!!deletingFolderId} onOpenChange={() => setDeletingFolderId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除收藏夹</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div>
+                <p>确定要删除「{folderToDelete?.name}」吗？</p>
+                {folderToDelete && folderToDelete.cardIds.length > 0 && (
+                  <p className="mt-2 text-amber-600 dark:text-amber-400 font-medium">
+                    此收藏夹中有 {folderToDelete.cardIds.length} 条内容，删除后将无法恢复。
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteFolder}
+              className="bg-red-500 text-white hover:bg-red-600"
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   )
 }
