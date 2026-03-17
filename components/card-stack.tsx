@@ -91,7 +91,7 @@ export function CardStack({ categoryId, cards: allCards }: CardStackProps) {
     if (showFolders && info.point.y) {
       updateSelectedFolder(info.point.y)
     }
-  }, [dragX, dragY, showFolders, favorites, updateSelectedFolder])
+  }, [dragX, dragY, showFolders, favorites, updateSelectedFolder, setSelectedFolderId])
 
   const handleDragEnd = useCallback((_: unknown, info: { offset: { x: number; y: number }; velocity: { x: number; y: number } }) => {
     const { offset, velocity } = info
@@ -143,7 +143,7 @@ export function CardStack({ categoryId, cards: allCards }: CardStackProps) {
     setSelectedFolderId(null)
     animate(dragX, 0, { type: 'spring', stiffness: 400, damping: 30 })
     animate(dragY, 0, { type: 'spring', stiffness: 400, damping: 30 })
-  }, [cards, currentIndex, favorites, addToFavorite, dragX, dragY, triggerFavoriteAnimation])
+  }, [cards, currentIndex, favorites, addToFavorite, dragX, dragY, triggerFavoriteAnimation, selectedFolderId, setSelectedFolderId])
 
   const currentCard = cards[currentIndex]
 
