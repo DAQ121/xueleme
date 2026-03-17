@@ -16,7 +16,7 @@ import { MoveFolderModal } from './components/move-folder-modal'
 import { SwipeableCard } from './components/swipeable-card'
 import { FolderDetailView } from './components/folder-detail-view'
 import { FOLDER_COLOR_PRESETS, MOCK_CARDS } from '@/lib/mock-data'
-import type { FavoriteFolder } from '@/lib/types'
+import type { FavoriteFolder, SearchResultCard } from '@/lib/types'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,8 +55,8 @@ function FavoritesContent() {
   const [viewingFolder, setViewingFolder] = useState<FavoriteFolder | null>(null)
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Array<typeof cards[0] & { folderName: string, folderColor: string }>>([])
-  const [selectedCard, setSelectedCard] = useState<(typeof cards[0] & { folderName: string, folderColor: string }) | null>(null)
+  const [searchResults, setSearchResults] = useState<SearchResultCard[]>([])
+  const [selectedCard, setSelectedCard] = useState<SearchResultCard | null>(null)
 
   // 搜索逻辑
   useEffect(() => {
@@ -70,7 +70,7 @@ function FavoritesContent() {
         const card = cards.find(c => c.id === cardId)
         return card ? { ...card, folderName: folder.name, folderColor: folder.color } : null
       })
-    ).filter(Boolean) as Array<typeof cards[0] & { folderName: string, folderColor: string }>
+    ).filter(Boolean) as SearchResultCard[]
 
     const results = allFavoriteCards.filter(card => 
       card.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -255,9 +255,9 @@ function SearchResultsList({
   query, 
   onItemClick 
 }: {
-  results: Array<any>,
+  results: SearchResultCard[],
   query: string,
-  onItemClick: (card: any) => void
+  onItemClick: (card: SearchResultCard) => void
 }) {
   if (results.length === 0) {
     return (

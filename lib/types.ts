@@ -17,13 +17,20 @@ export interface KnowledgeCard {
 }
 
 // 收藏夹
-export interface FavoriteFolder {
+export type FavoriteFolder = {
   id: string
   name: string
-  color: string // 颜色代码
   cardIds: string[]
+  color: string // 颜色代码
+  order: number
   createdAt: string
   updatedAt: string
+}
+
+// 搜索结果卡片
+export type SearchResultCard = KnowledgeCard & {
+  folderName: string
+  folderColor: string
 }
 
 // 用户设置
