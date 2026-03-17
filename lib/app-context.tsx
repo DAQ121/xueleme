@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, type ReactNode, useCallback } from 'react'
+import { createContext, useContext, useState, type ReactNode, useCallback, useEffect } from 'react'
 import { Toaster } from '@/lib/react-hot-toast'
 import { useFavorites } from '@/hooks/use-favorites'
 import { MOCK_CATEGORIES, MOCK_CARDS } from '@/lib/mock-data'
