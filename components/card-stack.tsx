@@ -100,8 +100,8 @@ export function CardStack({ categoryId, cards: allCards }: CardStackProps) {
 
     // 右滑收藏
     if (constrainedX > 100 || (constrainedX > 50 && velocity.x > 400)) {
-      const folderId = favorites[0]?.id || 'default'
-      if (currentCard) {
+      const folderId = selectedFolderId || favorites[0]?.id
+      if (currentCard && folderId) {
         addToFavorite(currentCard.id, folderId)
         triggerFavoriteAnimation()
         toast.success('已收藏')

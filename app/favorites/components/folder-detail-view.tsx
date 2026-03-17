@@ -15,13 +15,13 @@ export function FolderDetailView({
   folder: FavoriteFolder
   onClose: () => void
 }) {
-  const { favorites, removeFromFavorite, addToFavorite } = useApp()
-  const [selectedCard, setSelectedCard] = useState<typeof MOCK_CARDS[0] | null>(null)
+  const { favorites, removeFromFavorite, addToFavorite, cards: allCards } = useApp()
+  const [selectedCard, setSelectedCard] = useState<(typeof allCards)[0] | null>(null)
   const [movingCardId, setMovingCardId] = useState<string | null>(null)
   
   // 实时获取卡片，这样删除后会自动更新
   const currentFolder = favorites.find(f => f.id === folder.id)
-  const cards = MOCK_CARDS.filter(c => currentFolder?.cardIds.includes(c.id) || false)
+  const cards = allCards.filter(c => currentFolder?.cardIds.includes(c.id) || false)
 
   const handleRemoveCard = (cardId: string) => {
     removeFromFavorite(cardId, folder.id)
