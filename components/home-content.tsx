@@ -1,17 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '@/lib/app-context'
+import { getCards } from '@/lib/data'
 import { CategoryTabs } from '@/components/category-tabs'
 import { CardStack } from '@/components/card-stack'
+import { CardStackSkeleton } from '@/components/card-stack-skeleton'
 import { BottomNav } from '@/components/bottom-nav'
 import type { KnowledgeCard } from '@/lib/types'
 
-export function HomeContent({ allCards }: { allCards: KnowledgeCard[] }) {
+export function HomeContent() {
   const { settings } = useApp()
+  const [allCards, setAllCards] = useState<KnowledgeCard[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState(
     settings.selectedCategories[0] || 'funny'
   )
+
+  useEffect(() => {
+    const fetchCards = async () => {
+      setIsLoading(true)
+      try {
+        const cards = await getCards()
+        setAllCards(cards)
+      } catch (error) {
+        console.error('Failed to fetch cards:', error)
+        // 在这里可以设置一个错误状态并在UI中显示
+      }
+      setIsLoading(false)
+    }
+    fetchCards()
+  }, [])
 
   return (
     <main className="flex flex-col h-[100dvh] bg-background">
@@ -27,7 +46,11 @@ export function HomeContent({ allCards }: { allCards: KnowledgeCard[] }) {
       />
 
       {/* 卡片区域 */}
-      <CardStack categoryId={activeCategory} cards={allCards} />
+      {isLoading ? (
+        <CardStackSkeleton />
+      ) : (
+        <CardStack categoryId={activeCategory} cards={allCards} />
+      )}
 
       {/* 底部导航占位 */}
       <div className="h-16" />
