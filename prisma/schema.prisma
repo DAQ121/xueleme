@@ -1,0 +1,115 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 分类
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cards     Card[]
+}
+
+// 知识卡片
+model Card {
+  id         String     @id @default(cuid())
+  categoryId String
+  category   Category   @relation(fields: [categoryId], references: [id])
+  content    String     @db.Text
+  author     String?
+  source     String?
+  status     CardStatus @default(PUBLISHED)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  favoritedBy FavoriteCard[]
+}
+
+enum CardStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// 用户
+model User {
+  id           String   @id @default(cuid())
+  phone        String?  @unique
+  email        String?  @unique
+  passwordHash String?
+  isSubscribed Boolean  @default(false)
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  favorites FavoriteFolder[]
+  feedbacks Feedback[]
+  settings  UserSettings?
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// 收藏夹
+model FavoriteFolder {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cards FavoriteCard[]
+}
+
+// 收藏夹与卡片的关联
+model FavoriteCard {
+  folderId  String
+  folder    FavoriteFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  cardId    String
+  card      Card           @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+
+  @@id([folderId, cardId])
+}
+
+// 用户设置（MySQL 不支持数组，用 JSON 存储）
+model UserSettings {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  selectedCategories Json     @default("[]")
+  categoryOrder      Json     @default("[]")
+  theme              String   @default("system")
+  updatedAt          DateTime @updatedAt
+}
+
+// 意见反馈
+model Feedback {
+  id        String         @id @default(cuid())
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  content   String         @db.Text
+  status    FeedbackStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+}
+
+enum FeedbackStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+}

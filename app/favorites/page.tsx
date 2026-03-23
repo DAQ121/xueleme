@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, MoreHorizontal, Pencil, Trash2, XCircle, ChevronLeft, ArrowRight, Bookmark, ChevronRight, Search, X } from 'lucide-react'
 import { AppProvider, useApp } from '@/lib/app-context'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { FloatingCloseButton } from '@/components/ui/floating-close-button'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { useDebounce } from '@/hooks/use-debounce'
 import { FolderCard } from './components/folder-card'
 import { EditFolderModal } from './components/edit-folder-modal'
 import { CardDetailModal } from './components/card-detail-modal'
@@ -16,7 +17,7 @@ import { MoveFolderModal } from './components/move-folder-modal'
 import { SwipeableCard } from './components/swipeable-card'
 import { FolderDetailView } from './components/folder-detail-view'
 import { SearchResultsList } from './components/search-results-list'
-import { FOLDER_COLOR_PRESETS, MOCK_CARDS } from '@/lib/mock-data'
+import { MOCK_CARDS } from '@/lib/mock-data'
 import type { FavoriteFolder, SearchResultCard } from '@/lib/types'
 import {
   DropdownMenu,
@@ -56,30 +57,28 @@ function FavoritesContent() {
   const [viewingFolder, setViewingFolder] = useState<FavoriteFolder | null>(null)
   const [deletingFolderId, setDeletingFolderId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<SearchResultCard[]>([])
   const [selectedCard, setSelectedCard] = useState<SearchResultCard | null>(null)
 
-  // 搜索逻辑
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setSearchResults([])
-      return
-    }
+  const debouncedQuery = useDebounce(searchQuery, 300)
 
-    const allFavoriteCards = favorites.flatMap(folder => 
+  // 搜索逻辑 - 使用 useMemo 优化
+  const searchResults = useMemo(() => {
+    if (debouncedQuery.trim() === '') return []
+
+    const allFavoriteCards = favorites.flatMap(folder =>
       folder.cardIds.map(cardId => {
         const card = cards.find(c => c.id === cardId)
         return card ? { ...card, folderName: folder.name, folderColor: folder.color } : null
       })
     ).filter(Boolean) as SearchResultCard[]
 
-    const results = allFavoriteCards.filter(card => 
-      card.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      card.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      card.source?.toLowerCase().includes(searchQuery.toLowerCase())
+    const query = debouncedQuery.toLowerCase()
+    return allFavoriteCards.filter(card =>
+      card.content.toLowerCase().includes(query) ||
+      card.author?.toLowerCase().includes(query) ||
+      card.source?.toLowerCase().includes(query)
     )
-    setSearchResults(results)
-  }, [searchQuery, favorites, cards])
+  }, [debouncedQuery, favorites, cards])
 
   if (!isHydrated) {
     return (

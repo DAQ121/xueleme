@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FloatingCloseButton } from '@/components/ui/floating-close-button'
-import { FOLDER_COLOR_PRESETS } from '@/lib/mock-data'
+import { FOLDER_COLOR_PRESETS } from '@/lib/constants'
 import type { FavoriteFolder } from '@/lib/types'
 
 export function EditFolderModal({

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { MoreHorizontal, Pencil, Trash2, Bookmark } from 'lucide-react'
 import type { FavoriteFolder } from '@/lib/types'
@@ -8,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-export function FolderCard({ 
+export const FolderCard = memo(function FolderCard({ 
   folder, 
   onEdit, 
   onDelete,
@@ -78,4 +79,4 @@ export function FolderCard({
       </div>
     </motion.div>
   )
-}
+})

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Crown, 
@@ -57,6 +57,15 @@ function MenuItem({
 // 主题选择器
 function ThemeSelector() {
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
   
   const themes = [
     { id: 'light', icon: Sun, label: '浅色' },
@@ -225,13 +234,26 @@ function SubscriptionModal({ onClose }: { onClose: () => void }) {
 function FeedbackPage({ onBack }: { onBack: () => void }) {
   const [feedback, setFeedback] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = () => {
-    if (feedback.trim()) {
+  const handleSubmit = async () => {
+    if (!feedback.trim()) return
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: feedback.trim() }),
+      })
+      if (!res.ok) throw new Error('提交失败')
       setSubmitted(true)
-      setTimeout(() => {
-        onBack()
-      }, 1500)
+      setTimeout(() => onBack(), 1500)
+    } catch {
+      setError('提交失败，请重试')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -272,13 +294,14 @@ function FeedbackPage({ onBack }: { onBack: () => void }) {
                 placeholder="请输入您的意见或建议..."
                 className="w-full h-48 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 text-slate-700 dark:text-slate-200 placeholder:text-slate-400"
               />
+              {error && <p className="text-sm text-red-500">{error}</p>}
               <Button
                 onClick={handleSubmit}
-                disabled={!feedback.trim()}
+                disabled={!feedback.trim() || loading}
                 className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium"
               >
                 <Send className="w-4 h-4 mr-2" />
-                提交反馈
+                {loading ? '提交中...' : '提交反馈'}
               </Button>
             </div>
           )}

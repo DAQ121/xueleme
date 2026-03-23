@@ -1,19 +1,26 @@
 import { NextResponse } from 'next/server'
-import { MOCK_CARDS } from '@/lib/mock-data'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const categoryId = searchParams.get('categoryId')
+  const page = parseInt(searchParams.get('page') || '1')
+  const pageSize = parseInt(searchParams.get('pageSize') || '20')
 
-  let cards = MOCK_CARDS
-
-  if (categoryId) {
-    cards = MOCK_CARDS.filter(card => card.categoryId === categoryId)
+  const where = {
+    status: 'PUBLISHED' as const,
+    ...(categoryId ? { categoryId } : {}),
   }
 
-  // 在真实应用中，这里可能会有数据库查询和错误处理
-  // 为了模拟网络延迟，可以添加一个短暂的延时
-  await new Promise(resolve => setTimeout(resolve, 500))
+  const [list, total] = await Promise.all([
+    prisma.card.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.card.count({ where }),
+  ])
 
-  return NextResponse.json(cards)
+  return NextResponse.json({ list, total, page, pageSize, hasMore: page * pageSize < total })
 }

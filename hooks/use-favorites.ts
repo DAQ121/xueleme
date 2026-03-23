@@ -1,30 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { MOCK_CATEGORIES, MOCK_CARDS, FOLDER_COLOR_PRESETS } from '@/lib/mock-data'
+import { storage, STORAGE_KEYS } from '@/lib/storage'
+import { dataService } from '@/lib/services/data-service'
 import type { FavoriteFolder } from '@/lib/types'
 
-const STORAGE_KEY = 'xueleme-favorites'
-
-// 获取初始数据的函数，这个逻辑之前在 AppContext 中
+// 获取初始数据的函数
 const getInitialFavorites = (): FavoriteFolder[] => {
-  const savedFavorites = localStorage.getItem(STORAGE_KEY)
-  if (savedFavorites) {
-    try {
-      const parsed = JSON.parse(savedFavorites)
-      if (parsed.length > 0) return parsed
-    } catch (e) {
-      console.error('Failed to parse favorites from localStorage:', e)
-    }
-  }
-  // 如果 localStorage 为空或解析失败，则返回基于 mock 数据的初始值
-  return MOCK_CATEGORIES.map((category, index) => ({
-    ...category,
-    color: FOLDER_COLOR_PRESETS[index % FOLDER_COLOR_PRESETS.length],
-    cardIds: MOCK_CARDS.filter(c => c.categoryId === category.id).map(c => c.id),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }))
+  const saved = storage.get<FavoriteFolder[]>(STORAGE_KEYS.FAVORITES, [])
+  return saved.length > 0 ? saved : dataService.getInitialFavorites()
 }
 
 export function useFavorites() {
@@ -38,7 +22,7 @@ export function useFavorites() {
 
   useEffect(() => {
     if (isHydrated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites))
+      storage.set(STORAGE_KEYS.FAVORITES, favorites)
     }
   }, [favorites, isHydrated])
 

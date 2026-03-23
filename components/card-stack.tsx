@@ -1,23 +1,12 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { motion, useMotionValue, useTransform, animate, AnimatePresence } from 'framer-motion';
-import { Heart, Bookmark, ChevronUp, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
-import { toast } from '@/lib/react-hot-toast';
+import { useState, useMemo, useEffect } from 'react';
+import { motion, useTransform, AnimatePresence } from 'framer-motion';
+import { Heart, Bookmark, Sparkles } from 'lucide-react';
 import { useApp } from '@/lib/app-context';
+import { useCardDrag } from '@/hooks/use-card-drag';
+import { MOTIVATION_QUOTES, CATEGORY_LABELS } from '@/lib/constants';
 import type { KnowledgeCard as CardType } from '@/lib/types';
-
-// 激励语句
-const MOTIVATION_QUOTES = [
-  '每天进步一点点',
-  '知识改变命运',
-  '学无止境',
-  '今日所学，明日之基',
-  '积跬步以至千里',
-  '博学笃行',
-  '知识就是力量',
-  '学而时习之',
-]
 
 interface CardStackProps {
   categoryId: string
@@ -31,119 +20,39 @@ interface CardStackProps {
 export function CardStack({ categoryId, cards: allCards }: CardStackProps) {
   const { favorites, addToFavorite, isCardFavorited, triggerFavoriteAnimation } = useApp()
   const [currentIndex, setCurrentIndex] = useState(0)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [showFolders, setShowFolders] = useState(false)
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [direction, setDirection] = useState<'up' | 'down' | null>(null)
   const [motivationQuote, setMotivationQuote] = useState<string>('')
-
-  useEffect(() => {
-    // 仅在客户端设置随机名言，以避免水合不匹配
-    setMotivationQuote(MOTIVATION_QUOTES[Math.floor(Math.random() * MOTIVATION_QUOTES.length)])
-  }, [])
-  
-  const dragX = useMotionValue(0)
-  const dragY = useMotionValue(0)
 
   const cards = useMemo(() => {
     return allCards.filter(card => card.categoryId === categoryId)
   }, [categoryId, allCards])
 
+  const {
+    dragX,
+    dragY,
+    containerRef,
+    showFolders,
+    selectedFolderId,
+    handleDrag,
+    handleDragEnd,
+  } = useCardDrag(
+    cards,
+    currentIndex,
+    setCurrentIndex,
+    setDirection,
+    favorites,
+    addToFavorite,
+    triggerFavoriteAnimation
+  )
+
+  useEffect(() => {
+    setMotivationQuote(MOTIVATION_QUOTES[Math.floor(Math.random() * MOTIVATION_QUOTES.length)])
+  }, [])
+
   useEffect(() => {
     setCurrentIndex(0)
     setDirection(null)
   }, [categoryId])
-
-  const updateSelectedFolder = useCallback((clientY: number) => {
-    if (!containerRef.current || favorites.length === 0) return
-    
-    const rect = containerRef.current.getBoundingClientRect()
-    const relativeY = clientY - rect.top
-    const centerY = rect.height / 2
-    const folderHeight = 56
-    const totalHeight = favorites.length * folderHeight
-    const startY = centerY - totalHeight / 2
-    
-    const folderIndex = Math.floor((relativeY - startY) / folderHeight)
-    const clampedIndex = Math.max(0, Math.min(favorites.length - 1, folderIndex))
-    
-    setSelectedFolderId(favorites[clampedIndex]?.id || null)
-  }, [favorites])
-
-  const handleDrag = useCallback((_: unknown, info: { offset: { x: number; y: number }; point: { y: number } }) => {
-    // 禁止左滑
-    const constrainedX = Math.max(0, info.offset.x)
-    dragX.set(constrainedX)
-    dragY.set(info.offset.y)
-    
-    // 显示收藏夹
-    if (constrainedX > 60 && !showFolders) {
-      setShowFolders(true)
-      if (favorites.length > 0) {
-        setSelectedFolderId(favorites[0].id)
-      }
-    } else if (constrainedX <= 60 && showFolders) {
-      setShowFolders(false)
-      setSelectedFolderId(null)
-    }
-    
-    // 根据Y坐标选择收藏夹
-    if (showFolders && info.point.y) {
-      updateSelectedFolder(info.point.y)
-    }
-  }, [dragX, dragY, showFolders, favorites, updateSelectedFolder, setSelectedFolderId])
-
-  const handleDragEnd = useCallback((_: unknown, info: { offset: { x: number; y: number }; velocity: { x: number; y: number } }) => {
-    const { offset, velocity } = info
-    const constrainedX = Math.max(0, offset.x)
-    const currentCard = cards[currentIndex]
-
-    // 右滑收藏
-    if (constrainedX > 100 || (constrainedX > 50 && velocity.x > 400)) {
-      const folderId = selectedFolderId || favorites[0]?.id
-      if (currentCard && folderId) {
-        addToFavorite(currentCard.id, folderId)
-        triggerFavoriteAnimation()
-        toast.success('已收藏')
-      }
-      setShowFolders(false)
-      setSelectedFolderId(null)
-
-      // 收藏后切换到下一张
-      if (currentIndex < cards.length - 1) {
-        setDirection('up')
-        setCurrentIndex(prev => prev + 1)
-      } else {
-        // 如果是最后一张，则弹回
-        animate(dragX, 0, { type: 'spring', stiffness: 400, damping: 30 })
-        animate(dragY, 0, { type: 'spring', stiffness: 400, damping: 30 })
-      }
-      return
-    }
-
-    // 上下滑动切换卡片
-    const threshold = 50
-    const velocityThreshold = 200
-
-    if (offset.y < -threshold || velocity.y < -velocityThreshold) {
-      // 上滑 - 下一张
-      if (currentIndex < cards.length - 1) {
-        setDirection('up')
-        setCurrentIndex(prev => prev + 1)
-      }
-    } else if (offset.y > threshold || velocity.y > velocityThreshold) {
-      // 下滑 - 上一张
-      if (currentIndex > 0) {
-        setDirection('down')
-        setCurrentIndex(prev => prev - 1)
-      }
-    }
-
-    setShowFolders(false)
-    setSelectedFolderId(null)
-    animate(dragX, 0, { type: 'spring', stiffness: 400, damping: 30 })
-    animate(dragY, 0, { type: 'spring', stiffness: 400, damping: 30 })
-  }, [cards, currentIndex, favorites, addToFavorite, dragX, dragY, triggerFavoriteAnimation, selectedFolderId, setSelectedFolderId])
 
   const currentCard = cards[currentIndex]
 
@@ -308,16 +217,7 @@ export function CardStack({ categoryId, cards: allCards }: CardStackProps) {
                     {/* 分类标签 */}
                     <div className="absolute bottom-6 left-0 right-0 flex justify-center">
                       <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                        {currentCard.categoryId === 'funny' && '搞笑'}
-                        {currentCard.categoryId === 'history' && '历史'}
-                        {currentCard.categoryId === 'military' && '军事'}
-                        {currentCard.categoryId === 'science' && '科学'}
-                        {currentCard.categoryId === 'philosophy' && '哲理'}
-                        {currentCard.categoryId === 'life' && '生活'}
-                        {currentCard.categoryId === 'tech' && '科技'}
-                        {currentCard.categoryId === 'art' && '艺术'}
-                        {currentCard.categoryId === 'sports' && '体育'}
-                        {currentCard.categoryId === 'food' && '美食'}
+                        {CATEGORY_LABELS[currentCard.categoryId] || currentCard.categoryId}
                       </span>
                     </div>
                   </div>

@@ -12,23 +12,23 @@ export interface KnowledgeCard {
   content: string
   author?: string
   source?: string
-  gradient: string // 渐变色类名
+  gradient: string
   createdAt: string
 }
 
 // 收藏夹
-export type FavoriteFolder = {
+export interface FavoriteFolder {
   id: string
   name: string
   cardIds: string[]
-  color: string // 颜色代码
+  color: string
   order: number
   createdAt: string
   updatedAt: string
 }
 
 // 搜索结果卡片
-export type SearchResultCard = KnowledgeCard & {
+export interface SearchResultCard extends KnowledgeCard {
   folderName: string
   folderColor: string
 }
@@ -38,12 +38,4 @@ export interface UserSettings {
   selectedCategories: string[]
   categoryOrder: string[]
   theme: 'light' | 'dark' | 'system'
-}
-
-// 应用状态
-export interface AppState {
-  categories: Category[]
-  cards: KnowledgeCard[]
-  favorites: FavoriteFolder[]
-  settings: UserSettings
 }

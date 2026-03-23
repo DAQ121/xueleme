@@ -353,17 +353,3 @@ export const DEFAULT_FAVORITE_FOLDER: FavoriteFolder = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 }
-
-// 收藏夹颜色预设
-export const FOLDER_COLOR_PRESETS = [
-  '#f43f5e', // rose
-  '#ec4899', // pink
-  '#a855f7', // purple
-  '#6366f1', // indigo
-  '#3b82f6', // blue
-  '#06b6d4', // cyan
-  '#14b8a6', // teal
-  '#22c55e', // green
-  '#eab308', // yellow
-  '#f97316', // orange
-]
