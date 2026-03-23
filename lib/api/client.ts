@@ -34,6 +34,17 @@ async function request<T>(
     headers,
   })
 
+  if (!res.ok) {
+    // 如果 HTTP 状态码不是 2xx，则抛出错误
+    const errorText = await res.text()
+    throw new Error(errorText || `Request failed with status ${res.status}`)
+  }
+
+  if (res.headers.get('Content-Length') === '0' || res.status === 204) {
+    // 如果响应体为空，则返回 null 或 undefined
+    return null as T
+  }
+
   const json: ApiResponse<T> = await res.json()
 
   if (json.code !== 0) {

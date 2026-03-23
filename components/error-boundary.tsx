@@ -26,6 +26,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: any) {
     console.error('ErrorBoundary caught:', error, errorInfo)
+    if (typeof window !== 'undefined') {
+      // Log to external service in production
+      console.error('Error details:', { message: error.message, stack: error.stack, errorInfo })
+    }
   }
 
   render() {

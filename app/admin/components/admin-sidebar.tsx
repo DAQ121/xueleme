@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, BookOpen, Tag, MessageSquare, LogOut, Sparkles, Menu, X, Users } from 'lucide-react'
+import { LayoutDashboard, BookOpen, Tag, Tags, MessageSquare, LogOut, Sparkles, Menu, X, Users } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/cards', icon: BookOpen, label: '卡片管理' },
   { href: '/admin/categories', icon: Tag, label: '分类管理' },
+  { href: '/admin/tags', icon: Tags, label: '标签管理' },
   { href: '/admin/users', icon: Users, label: '用户管理' },
   { href: '/admin/feedback', icon: MessageSquare, label: '反馈管理' },
 ]

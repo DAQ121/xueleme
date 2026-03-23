@@ -5,34 +5,43 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 // 分类
 model Category {
-  id        String   @id @default(cuid())
-  name      String
-  order     Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cards     Card[]
+  id              Int      @id @default(autoincrement())
+  name            String
+  code            String   @unique
+  template        String?  @db.Text
+  isScheduled     Boolean  @default(false)
+  cronExpression  String? 
+  order           Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  cards           Card[]
 }
 
 // 知识卡片
 model Card {
-  id         String     @id @default(cuid())
-  categoryId String
-  category   Category   @relation(fields: [categoryId], references: [id])
-  content    String     @db.Text
-  author     String?
-  source     String?
-  status     CardStatus @default(PUBLISHED)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id             Int          @id @default(autoincrement())
+  categoryId     Int
+  category       Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  content        String       @db.Text
+  author         String?
+  source         String?
+  tags           Json         @default("[]")
+  likesCount     Int          @default(0)
+  favoritesCount Int          @default(0)
+  status         CardStatus   @default(PUBLISHED)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  favoritedBy    FavoriteCard[]
 
-  favoritedBy FavoriteCard[]
+  @@index([categoryId])
 }
 
 enum CardStatus {
@@ -43,7 +52,7 @@ enum CardStatus {
 
 // 用户
 model User {
-  id           String   @id @default(cuid())
+  id           Int      @id @default(autoincrement())
   phone        String?  @unique
   email        String?  @unique
   passwordHash String?
@@ -64,8 +73,8 @@ enum UserRole {
 
 // 收藏夹
 model FavoriteFolder {
-  id        String   @id @default(cuid())
-  userId    String
+  id        Int      @id @default(autoincrement())
+  userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   color     String
@@ -78,9 +87,9 @@ model FavoriteFolder {
 
 // 收藏夹与卡片的关联
 model FavoriteCard {
-  folderId  String
+  folderId  Int
   folder    FavoriteFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  cardId    String
+  cardId    Int
   card      Card           @relation(fields: [cardId], references: [id], onDelete: Cascade)
   createdAt DateTime       @default(now())
 
@@ -89,8 +98,8 @@ model FavoriteCard {
 
 // 用户设置（MySQL 不支持数组，用 JSON 存储）
 model UserSettings {
-  id                 String   @id @default(cuid())
-  userId             String   @unique
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   selectedCategories Json     @default("[]")
   categoryOrder      Json     @default("[]")
@@ -100,8 +109,8 @@ model UserSettings {
 
 // 意见反馈
 model Feedback {
-  id        String         @id @default(cuid())
-  userId    String?
+  id        Int            @id @default(autoincrement())
+  userId    Int?
   user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   content   String         @db.Text
   status    FeedbackStatus @default(PENDING)
@@ -113,3 +122,10 @@ enum FeedbackStatus {
   REVIEWED
   RESOLVED
 }
+
+// 标签
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+}
+

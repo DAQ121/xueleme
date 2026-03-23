@@ -1,261 +1,210 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback } from 'react'
-import { Plus, Pencil, Trash2, Search, X, CheckCircle, Archive, FileText } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useDebounce } from '@/hooks/use-debounce'
-import { CardFormModal } from './components/card-form-modal'
-import type { KnowledgeCard } from '@/lib/types'
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { CardFormModal } from './components/card-form-modal';
+import { Pagination } from '@/app/admin/components/pagination';
 
-type CardStatus = 'ALL' | 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+interface Category {
+  id: number;
+  name: string;
+}
 
-const STATUS_OPTIONS: { value: CardStatus; label: string; color: string }[] = [
-  { value: 'ALL', label: '全部', color: 'text-slate-600' },
-  { value: 'DRAFT', label: '草稿', color: 'text-amber-500' },
-  { value: 'PUBLISHED', label: '已发布', color: 'text-green-500' },
-  { value: 'ARCHIVED', label: '已下线', color: 'text-slate-400' },
-]
-
-interface CardWithCategory extends KnowledgeCard {
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
-  category?: { name: string }
+interface Card {
+  id: number;
+  content: string;
+  category: { id: number; name: string };
+  tags: string[];
+  likesCount: number;
+  favoritesCount: number;
 }
 
 export default function AdminCardsPage() {
-  const [cards, setCards] = useState<CardWithCategory[]>([])
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<CardStatus>('ALL')
-  const [editingCard, setEditingCard] = useState<CardWithCategory | null>(null)
-  const [isCreating, setIsCreating] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [cards, setCards] = useState<Card[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCard, setEditingCard] = useState<Card | null>(null);
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 10, total: 0 });
 
-  const debouncedSearch = useDebounce(search, 300)
-  const pageSize = 20
-
-  const fetchCards = useCallback(async () => {
-    setLoading(true)
+  const fetchData = useCallback(async (page = 1) => {
+    setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
-      if (statusFilter !== 'ALL') params.set('status', statusFilter)
-      const res = await fetch(`/api/admin/cards?${params}`)
-      const data = await res.json()
-      setCards(data.list)
-      setTotal(data.total)
-    } catch (e) {
-      console.error(e)
+      // Fetch categories along with cards
+      const [cardsRes, categoriesRes] = await Promise.all([
+        fetch(`/api/admin/cards?page=${page}&pageSize=${pagination.pageSize}`),
+        fetch('/api/admin/categories'),
+      ]);
+
+      if (!cardsRes.ok || !categoriesRes.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
+      const cardsData = await cardsRes.json();
+      const categoriesData = await categoriesRes.json();
+
+      const cards = cardsData.success ? cardsData.data : cardsData;
+      const cats = categoriesData.success ? categoriesData.data : categoriesData;
+
+      setCards(cards.list || []);
+      setPagination({
+        page: cards.page,
+        pageSize: cards.pageSize,
+        total: cards.total
+      });
+      setCategories(cats.list || []);
+    } catch (error) {
+      console.error(error);
+      alert('Failed to load data.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [page, statusFilter])
+  }, [pagination.pageSize]);
 
-  useEffect(() => { fetchCards() }, [fetchCards])
-  useEffect(() => { setPage(1) }, [statusFilter, debouncedSearch])
+  useEffect(() => {
+    fetchData(pagination.page);
+  }, [fetchData, pagination.page]);
+  
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
+    fetchData(newPage);
+  };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定删除这张卡片吗？')) return
-    setDeletingId(id)
+
+  
+  const handleFormSubmit = async (data: any) => {
+    const url = editingCard ? `/api/admin/cards/${editingCard.id}` : '/api/admin/cards';
+    const method = editingCard ? 'PATCH' : 'POST';
+
     try {
-      await fetch(`/api/admin/cards/${id}`, { method: 'DELETE' })
-      fetchCards()
-    } finally {
-      setDeletingId(null)
-    }
-  }
-
-  const handleStatusChange = async (id: string, status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED') => {
-    await fetch(`/api/admin/cards/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-    fetchCards()
-  }
-
-  const handleBatchPublish = async () => {
-    await Promise.all([...selectedIds].map(id =>
-      fetch(`/api/admin/cards/${id}`, {
-        method: 'PATCH',
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'PUBLISHED' }),
-      })
-    ))
-    setSelectedIds(new Set())
-    fetchCards()
-  }
+        body: JSON.stringify(data),
+      });
 
-  const handleBatchDelete = async () => {
-    if (!confirm(`确定删除选中的 ${selectedIds.size} 张卡片吗？`)) return
-    await Promise.all([...selectedIds].map(id =>
-      fetch(`/api/admin/cards/${id}`, { method: 'DELETE' })
-    ))
-    setSelectedIds(new Set())
-    fetchCards()
-  }
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to save card.');
+      }
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
-  }
-
-  const filteredCards = debouncedSearch
-    ? cards.filter(c =>
-        c.content.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        c.author?.toLowerCase().includes(debouncedSearch.toLowerCase())
-      )
-    : cards
-
-  const statusInfo = (status: string) => {
-    switch (status) {
-      case 'PUBLISHED': return { label: '已发布', cls: 'text-green-600 bg-green-50 dark:bg-green-900/20' }
-      case 'DRAFT': return { label: '草稿', cls: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20' }
-      case 'ARCHIVED': return { label: '已下线', cls: 'text-slate-400 bg-slate-100 dark:bg-slate-800' }
-      default: return { label: status, cls: '' }
+      setIsModalOpen(false);
+      setEditingCard(null);
+      fetchData(); // Refetch cards
+    } catch (error) {
+      console.error(error);
+      alert((error as Error).message);
     }
-  }
+  };
+
+  const handleOpenCreateModal = () => {
+    fetchCategories();
+    setEditingCard(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (card: Card) => {
+    fetchCategories();
+    const initialData = {
+        ...card,
+        tags: Array.isArray(card.tags) ? card.tags.join(', ') : '',
+        categoryId: card.category?.id
+    };
+    setEditingCard(initialData as any);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('确定要删除这张卡片吗？')) return;
+    try {
+      const res = await fetch(`/api/admin/cards/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('删除失败');
+      fetchData();
+    } catch (error) {
+      alert('删除失败');
+    }
+  };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto w-full">
-      {/* 顶部 */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6 max-w-6xl mx-auto w-full">
+      <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">卡片管理</h1>
-          <p className="text-sm text-slate-500 mt-1">共 {total} 张卡片</p>
+          <p className="text-sm text-slate-500 mt-1">共 {cards.length} 张卡片</p>
         </div>
-        <Button onClick={() => setIsCreating(true)} className="rounded-xl bg-orange-500 hover:bg-orange-600 text-white">
-          <Plus className="w-4 h-4 mr-2" />新增卡片
+        <Button onClick={handleOpenCreateModal} className="rounded-xl bg-orange-500 hover:bg-orange-600 text-white">
+          <Plus className="w-4 h-4 mr-1" />
+          新增卡片
         </Button>
       </div>
 
-      {/* 状态筛选 */}
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {STATUS_OPTIONS.map(opt => (
-          <button
-            key={opt.value}
-            onClick={() => setStatusFilter(opt.value)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              statusFilter === opt.value
-                ? 'bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-800'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 搜索 + 批量操作 */}
-      <div className="flex gap-3 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <Input placeholder="搜索卡片内容或作者..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
-          {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <X className="w-4 h-4 text-slate-400" />
-            </button>
-          )}
-        </div>
-        {selectedIds.size > 0 && (
-          <div className="flex gap-2">
-            <Button size="sm" onClick={handleBatchPublish} className="rounded-xl bg-green-500 hover:bg-green-600 text-white">
-              <CheckCircle className="w-4 h-4 mr-1" />批量发布 ({selectedIds.size})
-            </Button>
-            <Button size="sm" variant="outline" onClick={handleBatchDelete} className="rounded-xl text-red-500 border-red-200 hover:bg-red-50">
-              <Trash2 className="w-4 h-4 mr-1" />批量删除
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* 卡片列表 */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         {loading ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="p-4 animate-pulse">
-                <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-3/4 mb-2" />
-                <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/4" />
-              </div>
-            ))}
+          <p className="p-4 text-center text-slate-500">Loading...</p>
+        ) : cards.length === 0 ? (
+          <div className="py-16 flex flex-col items-center gap-3 text-slate-400">
+            <p>暂无卡片，点击右上角按钮新增第一张吧！</p>
           </div>
-        ) : filteredCards.length === 0 ? (
-          <div className="py-16 text-center text-slate-400">暂无卡片</div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredCards.map(card => {
-              const si = statusInfo(card.status)
-              return (
-                <div key={card.id} className={`flex items-start gap-3 p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.has(card.id) ? 'bg-orange-50/50 dark:bg-orange-900/10' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.has(card.id)}
-                    onChange={() => toggleSelect(card.id)}
-                    className="mt-1 rounded"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-800 dark:text-slate-100 line-clamp-2">{card.content}</p>
-                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${si.cls}`}>{si.label}</span>
-                      <span className="text-xs text-slate-400">{card.category?.name || card.categoryId}</span>
-                      {card.author && <span className="text-xs text-slate-400">— {card.author}</span>}
-                      <span className="text-xs text-slate-300">{new Date(card.createdAt).toLocaleDateString('zh-CN')}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    {card.status === 'DRAFT' && (
-                      <button onClick={() => handleStatusChange(card.id, 'PUBLISHED')} title="发布" className="p-1.5 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 text-slate-400 hover:text-green-500 transition-colors">
-                        <CheckCircle className="w-4 h-4" />
-                      </button>
-                    )}
-                    {card.status === 'PUBLISHED' && (
-                      <button onClick={() => handleStatusChange(card.id, 'ARCHIVED')} title="下线" className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 transition-colors">
-                        <Archive className="w-4 h-4" />
-                      </button>
-                    )}
-                    {card.status === 'ARCHIVED' && (
-                      <button onClick={() => handleStatusChange(card.id, 'PUBLISHED')} title="重新发布" className="p-1.5 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 text-slate-400 hover:text-green-500 transition-colors">
-                        <CheckCircle className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button onClick={() => setEditingCard(card)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 transition-colors">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-slate-50 dark:bg-slate-800 text-xs text-slate-500 uppercase">
+              <tr>
+                <th className="px-6 py-3">内容</th>
+                <th className="px-6 py-3">分类</th>
+                <th className="px-6 py-3">标签</th>
+                <th className="px-6 py-3">点赞</th>
+                <th className="px-6 py-3">收藏</th>
+                <th className="px-6 py-3"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {cards.map(card => (
+                <tr key={card.id} className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="px-6 py-4 font-medium text-slate-900 dark:text-white max-w-sm truncate">{card.content}</td>
+                  <td className="px-6 py-4">{card.category?.name || 'N/A'}</td>
+                  <td className="px-6 py-4 flex flex-wrap gap-1">
+                    {(Array.isArray(card.tags) ? card.tags : []).map(tag => (
+                      <Badge key={tag} variant="secondary">{tag}</Badge>
+                    ))}
+                  </td>
+                  <td className="px-6 py-4">{card.likesCount}</td>
+                  <td className="px-6 py-4">{card.favoritesCount}</td>
+                  <td className="px-6 py-4 text-right">
+                    <Button variant="ghost" size="sm" onClick={() => handleOpenEditModal(card)}>
                       <Pencil className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(card.id)} disabled={deletingId === card.id} className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(card.id)}>
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
 
-      {/* 分页 */}
-      {total > pageSize && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-slate-500">第 {page} 页，共 {Math.ceil(total / pageSize)} 页</p>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>上一页</Button>
-            <Button variant="outline" size="sm" disabled={page * pageSize >= total} onClick={() => setPage(p => p + 1)}>下一页</Button>
-          </div>
-        </div>
-      )}
+      <Pagination 
+        page={pagination.page}
+        pageSize={pagination.pageSize}
+        total={pagination.total}
+        onPageChange={handlePageChange}
+      />
 
-      {(isCreating || editingCard) && (
+      {isModalOpen && (
         <CardFormModal
-          card={editingCard || undefined}
-          onClose={() => { setIsCreating(false); setEditingCard(null) }}
-          onSaved={() => { setIsCreating(false); setEditingCard(null); fetchCards() }}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingCard(null);
+          }}
+          onSubmit={handleFormSubmit}
+          initialData={editingCard}
+          categories={categories}
         />
       )}
     </div>
-  )
+  );
 }

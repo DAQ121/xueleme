@@ -1,124 +1,102 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { CATEGORY_LABELS } from '@/lib/constants'
-import type { KnowledgeCard } from '@/lib/types'
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-interface Props {
-  card?: KnowledgeCard
-  onClose: () => void
-  onSaved: () => void
+interface Category {
+  id: number;
+  name: string;
 }
 
-export function CardFormModal({ card, onClose, onSaved }: Props) {
-  const [content, setContent] = useState(card?.content || '')
-  const [author, setAuthor] = useState(card?.author || '')
-  const [source, setSource] = useState(card?.source || '')
-  const [categoryId, setCategoryId] = useState(card?.categoryId || 'funny')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+interface CardFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: any) => void;
+  initialData?: any;
+  categories: Category[];
+}
 
-  const isEdit = !!card
+export function CardFormModal({ isOpen, onClose, onSubmit, initialData, categories }: CardFormModalProps) {
+  const [formData, setFormData] = useState(initialData || {});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!content.trim()) { setError('内容不能为空'); return }
-    setLoading(true)
-    setError('')
-
-    try {
-      const url = isEdit ? `/api/admin/cards/${card.id}` : '/api/admin/cards'
-      const method = isEdit ? 'PATCH' : 'POST'
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, author, source, categoryId }),
-      })
-      if (!res.ok) { setError('保存失败，请重试'); return }
-      onSaved()
-    } catch {
-      setError('网络错误，请重试')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(initialData || {
+        content: '',
+        categoryId: null,
+        tags: '', // We'll handle tags as a comma-separated string for simplicity
+        likesCount: 0,
+        favoritesCount: 0,
+      });
     }
-  }
+  }, [isOpen, initialData]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (value: string) => {
+    setFormData(prev => ({ ...prev, categoryId: parseInt(value, 10) }));
+  };
+
+  const handleSubmit = () => {
+    const finalData = {
+      ...formData,
+      tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+      likesCount: parseInt(formData.likesCount, 10) || 0,
+      favoritesCount: parseInt(formData.favoritesCount, 10) || 0,
+    };
+    onSubmit(finalData);
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl">
-        {/* 头部 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="font-semibold text-slate-800 dark:text-slate-100">
-            {isEdit ? '编辑卡片' : '新增卡片'}
-          </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-            <X className="w-4 h-4 text-slate-500" />
-          </button>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>{initialData ? '编辑卡片' : '新增卡片'}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label htmlFor="content" className="text-right pt-2">内容</Label>
+            <Textarea id="content" name="content" value={formData.content || ''} onChange={handleChange} className="col-span-3" rows={5} />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="categoryId" className="text-right">分类</Label>
+            <Select onValueChange={handleSelectChange} value={formData.categoryId?.toString()}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="选择一个分类" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(cat => (
+                  <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="tags" className="text-right">标签</Label>
+            <Input id="tags" name="tags" placeholder="用逗号分隔" value={formData.tags || ''} onChange={handleChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="likesCount" className="text-right">点赞数</Label>
+            <Input id="likesCount" name="likesCount" type="number" value={formData.likesCount || 0} onChange={handleChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="favoritesCount" className="text-right">收藏数</Label>
+            <Input id="favoritesCount" name="favoritesCount" type="number" value={formData.favoritesCount || 0} onChange={handleChange} className="col-span-3" />
+          </div>
         </div>
-
-        {/* 表单 */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">分类</label>
-            <select
-              value={categoryId}
-              onChange={e => setCategoryId(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-orange-400"
-            >
-              {Object.entries(CATEGORY_LABELS).map(([id, name]) => (
-                <option key={id} value={id}>{name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">内容 *</label>
-            <textarea
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              placeholder="请输入卡片内容..."
-              rows={4}
-              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-100 resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 placeholder:text-slate-400"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">作者</label>
-            <Input
-              value={author}
-              onChange={e => setAuthor(e.target.value)}
-              placeholder="可选"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">来源</label>
-            <Input
-              value={source}
-              onChange={e => setSource(e.target.value)}
-              placeholder="可选"
-            />
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>
-          )}
-
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" className="flex-1" onClick={onClose}>取消</Button>
-            <Button
-              type="submit"
-              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
-              disabled={loading}
-            >
-              {loading ? '保存中...' : '保存'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button onClick={handleSubmit}>保存</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }

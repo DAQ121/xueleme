@@ -1,18 +1,18 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const page = parseInt(searchParams.get('page') || '1')
-  const pageSize = parseInt(searchParams.get('pageSize') || '20')
-  const search = searchParams.get('search') || ''
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get('page') || '1');
+  const pageSize = parseInt(searchParams.get('pageSize') || '20');
+  const search = searchParams.get('search') || '';
 
   const where = search ? {
     OR: [
       { phone: { contains: search } },
       { email: { contains: search } },
     ]
-  } : {}
+  } : {};
 
   const [list, total] = await Promise.all([
     prisma.user.findMany({
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
       },
     }),
     prisma.user.count({ where }),
-  ])
+  ]);
 
-  return NextResponse.json({ list, total, page, pageSize, hasMore: page * pageSize < total })
+  return NextResponse.json({ list, total, page, pageSize, hasMore: page * pageSize < total });
 }

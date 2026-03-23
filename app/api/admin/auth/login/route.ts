@@ -1,31 +1,58 @@
-import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import bcrypt from 'bcryptjs'
-
-// 临时硬编码管理员账号，接入数据库后从 DB 查询
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@xueleme.com'
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || bcrypt.hashSync('admin123', 10)
+import { NextResponse } from 'next/server';
+import * as next_headers from 'next/headers';
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
+import { generateAccessToken, generateRefreshToken } from '@/lib/jwt';
+import { apiSuccess, apiError } from '@/lib/api-response';
+import { loginSchema } from '@/lib/validations';
+import logger from '@/lib/logger';
 
 export async function POST(request: Request) {
-  const { email, password } = await request.json()
+  try {
+    const body = await request.json();
+    const validated = loginSchema.parse(body);
 
-  if (email !== ADMIN_EMAIL) {
-    return NextResponse.json({ message: '邮箱或密码错误' }, { status: 401 })
+    const user = await prisma.user.findUnique({
+      where: { email: validated.email },
+      select: { id: true, email: true, role: true, passwordHash: true },
+    });
+
+    if (!user || user.role !== 'ADMIN') {
+      return apiError('INVALID_CREDENTIALS', '邮箱或密码错误', 401);
+    }
+
+    const isPasswordValid = await bcrypt.compare(validated.password, user.passwordHash || '');
+    if (!isPasswordValid) {
+      return apiError('INVALID_CREDENTIALS', '邮箱或密码错误', 401);
+    }
+
+    const payload = { userId: user.id, email: user.email, role: user.role };
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    const cookieStore = await next_headers.cookies();
+    cookieStore.set('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 15,
+      path: '/',
+    });
+    cookieStore.set('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+
+    logger.info('Admin login successful', { userId: user.id, email: user.email });
+    return apiSuccess({ user: { id: user.id, email: user.email, role: user.role } });
+  } catch (error: any) {
+    logger.error('Login error', { error: error.message });
+    if (error.name === 'ZodError') {
+      return apiError('VALIDATION_ERROR', '输入数据格式错误', 400);
+    }
+    return apiError('INTERNAL_ERROR', '服务器内部错误', 500);
   }
-
-  const valid = bcrypt.compareSync(password, ADMIN_PASSWORD_HASH)
-  if (!valid) {
-    return NextResponse.json({ message: '邮箱或密码错误' }, { status: 401 })
-  }
-
-  const cookieStore = await cookies()
-  cookieStore.set('admin_token', 'authenticated', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7天
-    path: '/',
-  })
-
-  return NextResponse.json({ message: '登录成功' })
 }

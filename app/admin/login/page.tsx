@@ -32,7 +32,9 @@ export default function AdminLoginPage() {
         return
       }
 
-      router.push('/admin')
+      // Instead of a client-side route change, we do a full page reload 
+      // to ensure the new cookie is sent on the next request.
+      window.location.assign('/admin');
     } catch {
       setError('网络错误，请重试')
     } finally {
