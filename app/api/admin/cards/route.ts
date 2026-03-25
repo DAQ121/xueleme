@@ -1,81 +1,50 @@
-import { prisma } from '@/lib/prisma';
-import { apiSuccess, apiError } from '@/lib/api-response';
-import { getCache, setCache, clearCachePattern } from '@/lib/cache';
-import { createCardSchema } from '@/lib/validations';
-import logger from '@/lib/logger';
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('pageSize') || '10');
+  const { searchParams } = new URL(request.url)
+  const page = parseInt(searchParams.get('page') || '1')
+  const pageSize = parseInt(searchParams.get('pageSize') || '20')
+  const status = searchParams.get('status') || undefined
 
-    const cacheKey = `admin:cards:${page}:${pageSize}`;
-    const cached = await getCache(cacheKey);
-    if (cached) return apiSuccess(cached);
+  const where = status ? { status: status as any } : undefined
 
-    const [cards, total] = await Promise.all([
-      prisma.card.findMany({
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          content: true,
-          categoryId: true,
-          status: true,
-          tags: true,
-          author: true,
-          source: true,
-          likesCount: true,
-          favoritesCount: true,
-          createdAt: true,
-          updatedAt: true,
-          category: { select: { id: true, name: true, code: true } },
-        },
-      }),
-      prisma.card.count(),
-    ]);
+  const [list, total] = await Promise.all([
+    prisma.card.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { createdAt: 'desc' },
+      include: { category: true },
+    }),
+    prisma.card.count({ where }),
+  ])
 
-    const list = cards.map(card => ({
-      ...card,
-      tags: Array.isArray(card.tags) ? card.tags : JSON.parse(card.tags as string || '[]'),
-    }));
-
-    const result = { list, total, page, pageSize };
-    await setCache(cacheKey, result, 60);
-    return apiSuccess(result);
-  } catch (error: any) {
-    logger.error('Failed to fetch cards', { error: error.message });
-    return apiError('FETCH_FAILED', '获取卡片失败', 500);
-  }
+  return NextResponse.json({ code: 0, data: { list, total } })
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const validated = createCardSchema.parse(body);
+    const body = await request.json()
+    const { content, categoryId, tags, likesCount, favoritesCount } = body
+
+    if (!content || !categoryId) {
+      return NextResponse.json({ code: 400, message: '内容和分类不能为空' }, { status: 400 })
+    }
 
     const card = await prisma.card.create({
       data: {
-        content: validated.content,
-        categoryId: validated.categoryId,
-        status: validated.status || 'DRAFT',
-        tags: validated.tags || [],
-        author: validated.author,
-        source: validated.source,
+        content,
+        categoryId,
+        tags: tags || [],
+        likesCount: likesCount || 0,
+        favoritesCount: favoritesCount || 0,
       },
-    });
+    })
 
-    await clearCachePattern('admin:cards:*');
-    await clearCachePattern('cards:*');
-    logger.info('Card created', { cardId: card.id });
-    return apiSuccess(card, 201);
-  } catch (error: any) {
-    logger.error('Failed to create card', { error: error.message });
-    if (error.name === 'ZodError') {
-      return apiError('VALIDATION_ERROR', '输入数据格式错误', 400);
-    }
-    return apiError('CREATE_FAILED', '创建卡片失败', 500);
+    return NextResponse.json({ code: 0, data: card }, { status: 201 })
+  } catch (error) {
+    console.error('Failed to create card:', error)
+    return NextResponse.json({ code: 500, message: '创建卡片失败' }, { status: 500 })
   }
 }

@@ -12,11 +12,7 @@ export async function GET() {
   ])
 
   return NextResponse.json({
-    totalCards,
-    totalCategories,
-    totalUsers,
-    totalFeedbacks,
-    publishedCards,
-    pendingFeedbacks,
+    code: 0,
+    data: { totalCards, totalCategories, totalUsers, totalFeedbacks, publishedCards, pendingFeedbacks },
   })
 }

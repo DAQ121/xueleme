@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   const { content, userId } = await request.json()
 
   if (!content?.trim()) {
-    return NextResponse.json({ message: '反馈内容不能为空' }, { status: 422 })
+    return NextResponse.json({ code: 422, message: '反馈内容不能为空' }, { status: 422 })
   }
 
   const feedback = await prisma.feedback.create({
@@ -15,5 +15,5 @@ export async function POST(request: Request) {
     },
   })
 
-  return NextResponse.json({ message: '感谢您的反馈', id: feedback.id }, { status: 201 })
+  return NextResponse.json({ code: 0, data: { message: '感谢您的反馈', id: feedback.id } }, { status: 201 })
 }

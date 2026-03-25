@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   title: '学了么 - 每日知识卡片',
   description: '通过文字卡片的方式，展示短平快的知识点，让人醍醐灌顶',
   generator: 'v0.app',
+  manifest: '/manifest.json',
   icons: {
     icon: [
       {
@@ -51,6 +52,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+              })
+            }
+          `
+        }} />
+      </head>
       <body className={`${notoSansSC.variable} font-sans antialiased`}>
         <ThemeProvider
           attribute="class"
@@ -60,7 +72,7 @@ export default function RootLayout({
         >
           {children}
         </ThemeProvider>
-        <Analytics />
+        {/* <Analytics /> */}
       </body>
     </html>
   )

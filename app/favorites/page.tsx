@@ -17,7 +17,6 @@ import { MoveFolderModal } from './components/move-folder-modal'
 import { SwipeableCard } from './components/swipeable-card'
 import { FolderDetailView } from './components/folder-detail-view'
 import { SearchResultsList } from './components/search-results-list'
-import { MOCK_CARDS } from '@/lib/mock-data'
 import type { FavoriteFolder, SearchResultCard } from '@/lib/types'
 import {
   DropdownMenu,

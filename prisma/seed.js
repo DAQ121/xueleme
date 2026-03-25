@@ -29,9 +29,9 @@ async function main() {
 
   // Clear old data
   await prisma.favoriteCard.deleteMany({});
-  await prisma.user.deleteMany({});
-  await prisma.card.deleteMany({});
+  await prisma.card.deleteMany({}); // Cards must be deleted before categories
   await prisma.category.deleteMany({});
+  await prisma.user.deleteMany({}); // Users might be last if other things depend on it
   console.log('Old data cleared.');
 
   // Create Admin User
@@ -77,7 +77,7 @@ async function main() {
               content: card.content,
               author: card.author,
               source: card.source,
-              tags: JSON.stringify(['示例']),
+              tags: ['示例'],
               likesCount: Math.floor(Math.random() * 120),
               favoritesCount: Math.floor(Math.random() * 60),
             },

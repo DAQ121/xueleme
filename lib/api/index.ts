@@ -7,4 +7,5 @@ export { cardsApi } from './cards'
 export { favoritesApi } from './favorites'
 export { settingsApi } from './settings'
 export { feedbackApi } from './feedback'
+export { userApi } from './user';
 export { apiClient, ApiError } from './client'

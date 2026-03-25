@@ -1,0 +1,23 @@
+{
+  "name": "学了么 - 每日知识卡片",
+  "short_name": "学了么",
+  "description": "通过文字卡片的方式，展示短平快的知识点，让人醍醐灌顶",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-light-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

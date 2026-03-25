@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { apiSuccess, apiError } from '@/lib/api-response'
+import { ok, fail } from '@/lib/api-response'
 import { createFolderSchema } from '@/lib/validations'
 import { getUserIdFromSession } from '@/lib/session'
 import logger from '@/lib/logger'
@@ -7,7 +7,7 @@ import logger from '@/lib/logger'
 export async function GET(request: Request) {
   try {
     const userId = await getUserIdFromSession()
-    if (!userId) return apiError('UNAUTHORIZED', '未登录', 401)
+    if (!userId) return fail('未登录', 401)
 
     const folders = await prisma.favoriteFolder.findMany({
       where: { userId },
@@ -33,17 +33,17 @@ export async function GET(request: Request) {
       updatedAt: f.updatedAt.toISOString(),
     }))
 
-    return apiSuccess(result)
+    return ok(result)
   } catch (error: any) {
     logger.error('Error in /api/favorites GET', { error: error.message })
-    return apiError('FETCH_FAILED', '获取收藏夹失败', 500)
+    return fail('获取收藏夹失败', 500)
   }
 }
 
 export async function POST(request: Request) {
   try {
     const userId = await getUserIdFromSession()
-    if (!userId) return apiError('UNAUTHORIZED', '未登录', 401)
+    if (!userId) return fail('未登录', 401)
 
     const body = await request.json()
     const validated = createFolderSchema.parse(body)
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     })
 
     logger.info('Folder created', { folderId: folder.id, userId })
-    return apiSuccess({
+    return ok({
       ...folder,
       cardIds: [],
       createdAt: folder.createdAt.toISOString(),
@@ -63,8 +63,8 @@ export async function POST(request: Request) {
   } catch (error: any) {
     logger.error('Error in /api/favorites POST', { error: error.message })
     if (error.name === 'ZodError') {
-      return apiError('VALIDATION_ERROR', '输入数据格式错误', 400)
+      return fail('输入数据格式错误', 400)
     }
-    return apiError('CREATE_FAILED', '创建收藏夹失败', 500)
+    return fail('创建收藏夹失败', 500)
   }
 }

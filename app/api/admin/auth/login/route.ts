@@ -3,7 +3,7 @@ import * as next_headers from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { generateAccessToken, generateRefreshToken } from '@/lib/jwt';
-import { apiSuccess, apiError } from '@/lib/api-response';
+import { ok, fail } from '@/lib/api-response';
 import { loginSchema } from '@/lib/validations';
 import logger from '@/lib/logger';
 
@@ -18,12 +18,12 @@ export async function POST(request: Request) {
     });
 
     if (!user || user.role !== 'ADMIN') {
-      return apiError('INVALID_CREDENTIALS', '邮箱或密码错误', 401);
+      return fail('邮箱或密码错误', 401);
     }
 
     const isPasswordValid = await bcrypt.compare(validated.password, user.passwordHash || '');
     if (!isPasswordValid) {
-      return apiError('INVALID_CREDENTIALS', '邮箱或密码错误', 401);
+      return fail('邮箱或密码错误', 401);
     }
 
     const payload = { userId: user.id, email: user.email, role: user.role };
@@ -47,12 +47,12 @@ export async function POST(request: Request) {
     });
 
     logger.info('Admin login successful', { userId: user.id, email: user.email });
-    return apiSuccess({ user: { id: user.id, email: user.email, role: user.role } });
+    return ok({ user: { id: user.id, email: user.email, role: user.role } });
   } catch (error: any) {
     logger.error('Login error', { error: error.message });
     if (error.name === 'ZodError') {
-      return apiError('VALIDATION_ERROR', '输入数据格式错误', 400);
+      return fail('输入数据格式错误', 400);
     }
-    return apiError('INTERNAL_ERROR', '服务器内部错误', 500);
+    return fail('服务器内部错误', 500);
   }
 }

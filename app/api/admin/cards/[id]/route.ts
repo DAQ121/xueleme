@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { apiSuccess, apiError } from '@/lib/api-response'
+import { ok, fail } from '@/lib/api-response'
 import { updateCardSchema } from '@/lib/validations'
 import { clearCachePattern } from '@/lib/cache'
 import { toInt } from '@/lib/id-utils'
@@ -24,11 +24,11 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
         updatedAt: true,
       }
     })
-    if (!card) return apiError('NOT_FOUND', '卡片不存在', 404)
-    return apiSuccess(card)
+    if (!card) return fail('卡片不存在', 404)
+    return ok(card)
   } catch (error: any) {
     logger.error('Failed to get card', { error: error.message })
-    return apiError('FETCH_FAILED', '获取卡片失败', 500)
+    return fail('获取卡片失败', 500)
   }
 }
 
@@ -46,13 +46,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     await clearCachePattern('admin:cards:*')
     await clearCachePattern('cards:*')
     logger.info('Card updated', { cardId: card.id })
-    return apiSuccess(card)
+    return ok(card)
   } catch (error: any) {
-    logger.error('Failed to update card', { error: error.message })
+    const { id } = await params
+    logger.error('Failed to update card', { cardId: id, error: error.message })
     if (error.name === 'ZodError') {
-      return apiError('VALIDATION_ERROR', '输入数据格式错误', 400)
+      return fail('输入数据格式错误', 400)
     }
-    return apiError('UPDATE_FAILED', '更新卡片失败', 500)
+    return fail('更新卡片失败', 500)
   }
 }
 
@@ -63,9 +64,10 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     await clearCachePattern('admin:cards:*')
     await clearCachePattern('cards:*')
     logger.info('Card deleted', { cardId: id })
-    return apiSuccess({ message: '删除成功' })
+    return ok({ message: '删除成功' })
   } catch (error: any) {
-    logger.error('Failed to delete card', { error: error.message })
-    return apiError('DELETE_FAILED', '删除卡片失败', 500)
+    const { id } = await params
+    logger.error('Failed to delete card', { cardId: id, error: error.message })
+    return fail('删除卡片失败', 500)
   }
 }

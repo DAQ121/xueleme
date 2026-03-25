@@ -7,7 +7,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   await prisma.favoriteCard.delete({
     where: { folderId_cardId: { folderId, cardId } },
   })
-  return NextResponse.json({ message: '移除成功' })
+  return NextResponse.json({ code: 0, data: null })
 }
 
 // 移动卡片到其他收藏夹
@@ -16,13 +16,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { targetFolderId } = await request.json()
 
   await prisma.$transaction([
-    prisma.favoriteCard.delete({
-      where: { folderId_cardId: { folderId, cardId } },
-    }),
-    prisma.favoriteCard.create({
-      data: { folderId: targetFolderId, cardId },
-    }),
+    prisma.favoriteCard.delete({ where: { folderId_cardId: { folderId, cardId } } }),
+    prisma.favoriteCard.create({ data: { folderId: targetFolderId, cardId } }),
   ])
 
-  return NextResponse.json({ message: '移动成功' })
+  return NextResponse.json({ code: 0, data: null })
 }

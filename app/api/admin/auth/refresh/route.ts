@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
 import * as next_headers from 'next/headers';
 import { verifyRefreshToken, generateAccessToken } from '@/lib/jwt';
-import { apiSuccess, apiError } from '@/lib/api-response';
+import { ok, fail } from '@/lib/api-response';
 
 export async function POST() {
   try {
@@ -9,12 +8,12 @@ export async function POST() {
     const refreshToken = cookieStore.get('refresh_token')?.value;
 
     if (!refreshToken) {
-      return apiError('NO_REFRESH_TOKEN', 'Refresh token not found', 401);
+      return fail('Refresh token not found', 401);
     }
 
     const payload = verifyRefreshToken(refreshToken);
     if (!payload) {
-      return apiError('INVALID_REFRESH_TOKEN', 'Invalid refresh token', 401);
+      return fail('Invalid refresh token', 401);
     }
 
     const accessToken = generateAccessToken(payload);
@@ -26,8 +25,8 @@ export async function POST() {
       path: '/',
     });
 
-    return apiSuccess({ message: 'Token refreshed' });
-  } catch (error) {
-    return apiError('INTERNAL_ERROR', '服务器内部错误', 500);
+    return ok({ message: 'Token refreshed' });
+  } catch {
+    return fail('服务器内部错误', 500);
   }
 }

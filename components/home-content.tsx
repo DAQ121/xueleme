@@ -1,22 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '@/lib/app-context'
 import { CategoryTabs } from '@/components/category-tabs'
 import { CardStack } from '@/components/card-stack'
 import { BottomNav } from '@/components/bottom-nav'
-import type { KnowledgeCard } from '@/lib/types'
 
-export function HomeContent({ allCards }: { allCards: KnowledgeCard[] }) {
+export function HomeContent() {
   const { settings } = useApp()
-  const [activeCategory, setActiveCategory] = useState(
-    settings.selectedCategories[0] || 'funny'
-  )
+  const [activeCategory, setActiveCategory] = useState('')
+
+  useEffect(() => {
+    if (!activeCategory && settings.selectedCategories.length > 0) {
+      setActiveCategory(settings.selectedCategories[0])
+    }
+  }, [settings.selectedCategories])
 
   return (
     <main className="flex flex-col h-[100dvh] bg-background">
-      <header className="flex items-center justify-center pt-safe px-4 py-3">
-        <h1 className="text-xl font-bold">学了么</h1>
+      <header className="flex items-center justify-center pt-safe px-4 py-2">
+        <h1 className="text-lg font-bold">学了么</h1>
       </header>
 
       <CategoryTabs
@@ -24,9 +27,9 @@ export function HomeContent({ allCards }: { allCards: KnowledgeCard[] }) {
         onCategoryChange={setActiveCategory}
       />
 
-      <CardStack categoryId={activeCategory} cards={allCards} />
+      <CardStack categoryId={activeCategory} />
 
-      <div className="h-16" />
+      <div className="h-14" />
 
       <BottomNav />
     </main>

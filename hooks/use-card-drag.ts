@@ -6,11 +6,13 @@ import type { KnowledgeCard, FavoriteFolder } from '@/lib/types'
 export function useCardDrag(
   cards: KnowledgeCard[],
   currentIndex: number,
-  setCurrentIndex: (index: number) => void,
+  goNext: () => void,
+  goPrev: () => void,
   setDirection: (dir: 'up' | 'down' | null) => void,
   favorites: FavoriteFolder[],
   addToFavorite: (cardId: string, folderId: string) => void,
-  triggerFavoriteAnimation: () => void
+  triggerFavoriteAnimation: () => void,
+  markSeen: (cardId: string) => void
 ) {
   const dragX = useMotionValue(0)
   const dragY = useMotionValue(0)
@@ -68,14 +70,10 @@ export function useCardDrag(
       }
       setShowFolders(false)
       setSelectedFolderId(null)
-
-      if (currentIndex < cards.length - 1) {
-        setDirection('up')
-        setCurrentIndex(currentIndex + 1)
-      } else {
-        animate(dragX, 0, { type: 'spring', stiffness: 400, damping: 30 })
-        animate(dragY, 0, { type: 'spring', stiffness: 400, damping: 30 })
-      }
+      // 右滑收藏后前进到下一张
+      if (currentCard) markSeen(currentCard.id)
+      setDirection('up')
+      goNext()
       return
     }
 
@@ -83,22 +81,19 @@ export function useCardDrag(
     const velocityThreshold = 200
 
     if (offset.y < -threshold || velocity.y < -velocityThreshold) {
-      if (currentIndex < cards.length - 1) {
-        setDirection('up')
-        setCurrentIndex(currentIndex + 1)
-      }
+      if (currentCard) markSeen(currentCard.id)
+      setDirection('up')
+      goNext()
     } else if (offset.y > threshold || velocity.y > velocityThreshold) {
-      if (currentIndex > 0) {
-        setDirection('down')
-        setCurrentIndex(currentIndex - 1)
-      }
+      setDirection('down')
+      goPrev()
     }
 
     setShowFolders(false)
     setSelectedFolderId(null)
     animate(dragX, 0, { type: 'spring', stiffness: 400, damping: 30 })
     animate(dragY, 0, { type: 'spring', stiffness: 400, damping: 30 })
-  }, [cards, currentIndex, favorites, addToFavorite, dragX, dragY, triggerFavoriteAnimation, selectedFolderId, setCurrentIndex, setDirection])
+  }, [cards, currentIndex, favorites, addToFavorite, dragX, dragY, triggerFavoriteAnimation, selectedFolderId, goNext, goPrev, setDirection, markSeen])
 
   return {
     dragX,

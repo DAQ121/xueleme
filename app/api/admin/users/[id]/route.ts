@@ -17,11 +17,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       createdAt: true,
     },
   })
-  return NextResponse.json(user)
+  return NextResponse.json({ code: 0, data: user })
 }
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   await prisma.user.delete({ where: { id } })
-  return NextResponse.json({ message: '删除成功' })
+  return NextResponse.json({ code: 0, data: null })
 }

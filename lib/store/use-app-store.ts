@@ -2,77 +2,111 @@ import { create } from 'zustand'
 import { MOCK_CATEGORIES, MOCK_CARDS } from '@/lib/mock-data'
 import { storage, STORAGE_KEYS } from '@/lib/storage'
 import { dataService } from '@/lib/services/data-service'
+import { ApiError } from '@/lib/api/client';
 import type { Category, KnowledgeCard, UserSettings, FavoriteFolder } from '@/lib/types'
 
 const USE_API = process.env.NEXT_PUBLIC_USE_API === 'true'
 
 interface AppStore {
   // State
-  categories: Category[]
-  cards: KnowledgeCard[]
-  favorites: FavoriteFolder[]
-  settings: UserSettings
-  isHydrated: boolean
-  isFavoriting: boolean
+  user: any; // Replace 'any' with a proper User type
+  categories: Category[];
+  cards: KnowledgeCard[];
+  favorites: FavoriteFolder[];
+  settings: UserSettings;
+  isHydrated: boolean;
+  isFavoriting: boolean;
 
   // Actions
-  hydrate: () => Promise<void>
-  createFolder: (name: string, color: string) => Promise<void>
-  updateFolder: (id: string, updates: Partial<Pick<FavoriteFolder, 'name' | 'color'>>) => Promise<void>
-  deleteFolder: (id: string) => Promise<void>
-  addToFavorite: (cardId: string, folderId: string) => Promise<void>
-  removeFromFavorite: (cardId: string, folderId: string) => Promise<void>
-  isCardFavorited: (cardId: string) => boolean
-  updateCategoryOrder: (order: string[]) => void
-  setSelectedCategories: (categories: string[]) => void
-  triggerFavoriteAnimation: () => void
+  hydrate: () => Promise<void>;
+  createFolder: (name: string, color: string) => Promise<void>;
+  updateFolder: (id: string, updates: Partial<Pick<FavoriteFolder, 'name' | 'color'>>) => Promise<void>;
+  deleteFolder: (id: string) => Promise<void>;
+  addToFavorite: (cardId: string, folderId: string) => Promise<void>;
+  removeFromFavorite: (cardId: string, folderId: string) => Promise<void>;
+  isCardFavorited: (cardId: string) => boolean;
+  updateCategoryOrder: (order: string[]) => void;
+  setSelectedCategories: (categories: string[]) => void;
+  triggerFavoriteAnimation: () => void;
 }
 
 const defaultSettings: UserSettings = {
-  selectedCategories: MOCK_CATEGORIES.slice(0, 5).map(c => c.id),
-  categoryOrder: MOCK_CATEGORIES.map(c => c.id),
+  selectedCategories: [],
+  categoryOrder: [],
   theme: 'system',
 }
 
 export const useAppStore = create<AppStore>((set, get) => ({
-  categories: MOCK_CATEGORIES,
-  cards: MOCK_CARDS,
+  user: null,
+  categories: [],
+  cards: [],
   favorites: [],
   settings: defaultSettings,
   isHydrated: false,
   isFavoriting: false,
 
   hydrate: async () => {
+    if (get().isHydrated) return;
+
     try {
       if (USE_API) {
-        // 从 API 获取分类、卡片、收藏夹、设置
-        const [categories, cardsRes, favorites, settings] = await Promise.all([
+        // Fetch core content and user info concurrently; user failure must not block content
+        const [categories, cardsRes, user] = await Promise.all([
           dataService.getCategories(),
           dataService.getCards(),
-          dataService.getFavorites(),
-          dataService.getSettings(),
-        ])
+          dataService.getMe().catch(() => null),
+        ]);
+
+        let favorites: FavoriteFolder[] = [];
+        let settings: UserSettings | null = null;
+
+        if (user) {
+          // If user exists, fetch user-specific data
+          [favorites, settings] = await Promise.all([
+            dataService.getFavorites(),
+            dataService.getSettings(),
+          ]);
+        }
+
+        // 如果没有 settings，使用从 API 获取的分类初始化
+        const finalSettings = settings || {
+          selectedCategories: categories.slice(0, 5).map(c => c.id),
+          categoryOrder: categories.map(c => c.id),
+          theme: 'system' as const,
+        };
+
+        // Atomically set all state at once
         set({
           categories,
           cards: cardsRes,
+          user,
           favorites,
-          settings: settings || defaultSettings,
+          settings: finalSettings,
           isHydrated: true,
-        })
+        });
+
       } else {
-        // 本地 mock 模式
-        const savedFavorites = storage.get<FavoriteFolder[]>(STORAGE_KEYS.FAVORITES, [])
-        const favorites = savedFavorites.length > 0 ? savedFavorites : dataService.getInitialFavorites()
-        const settings = storage.get<UserSettings>(STORAGE_KEYS.SETTINGS, defaultSettings)
-        set({ favorites, settings, isHydrated: true })
+        // Local mock mode
+        const savedFavorites = storage.get<FavoriteFolder[]>(STORAGE_KEYS.FAVORITES, []);
+        const favorites = savedFavorites.length > 0 ? savedFavorites : dataService.getInitialFavorites();
+        const mockSettings = {
+          selectedCategories: MOCK_CATEGORIES.slice(0, 5).map(c => c.id),
+          categoryOrder: MOCK_CATEGORIES.map(c => c.id),
+          theme: 'system' as const,
+        };
+        const settings = storage.get<UserSettings>(STORAGE_KEYS.SETTINGS, mockSettings);
+        set({
+          categories: MOCK_CATEGORIES,
+          cards: MOCK_CARDS,
+          favorites,
+          settings,
+          isHydrated: true
+        });
       }
     } catch (e) {
-      console.error('Hydration failed:', e)
-      // 降级到本地数据
-      const savedFavorites = storage.get<FavoriteFolder[]>(STORAGE_KEYS.FAVORITES, [])
-      const favorites = savedFavorites.length > 0 ? savedFavorites : dataService.getInitialFavorites()
-      const settings = storage.get<UserSettings>(STORAGE_KEYS.SETTINGS, defaultSettings)
-      set({ favorites, settings, isHydrated: true })
+      console.error('Hydration failed:', e);
+      // Even if hydration fails, mark as hydrated to prevent re-runs
+      set({ isHydrated: true });
     }
   },
 

@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Pagination } from '@/app/admin/components/pagination';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,33 +30,25 @@ export default function AdminTagsPage() {
   const [tagName, setTagName] = useState('');
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [deletingTagId, setDeletingTagId] = useState<number | null>(null);
-  const [pagination, setPagination] = useState({ page: 1, pageSize: 10, total: 0 });
 
-  const fetchTags = useCallback(async (page = 1) => {
+  const fetchTags = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/tags?page=${page}&pageSize=${pagination.pageSize}`);
+      const res = await fetch('/api/admin/tags');
       if (!res.ok) throw new Error('Failed to fetch tags');
       const data = await res.json();
-      setTags(data.list || []);
-      setPagination(prev => ({ ...prev, total: data.total, page: data.page }));
+      setTags(data.data || []);
     } catch (error) {
       console.error(error);
       alert('Failed to load tags.');
     } finally {
       setLoading(false);
     }
-  }, [pagination.pageSize]);
+  }, []);
 
   useEffect(() => {
-    fetchTags(pagination.page);
-  }, [fetchTags, pagination.page]);
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage > 0) {
-      setPagination(prev => ({ ...prev, page: newPage }));
-    }
-  };
+    fetchTags();
+  }, [fetchTags]);
 
   const handleOpenModal = (tag: Tag | null) => {
     setEditingTag(tag);
@@ -134,10 +125,6 @@ export default function AdminTagsPage() {
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         {loading ? (
           <p className="p-4 text-center text-slate-500">Loading...</p>
-        ) : tags.length === 0 ? (
-          <div className="py-16 flex flex-col items-center gap-3 text-slate-400">
-            <p>暂无标签，点击右上角按钮新增第一个吧！</p>
-          </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {tags.map((tag) => (
@@ -156,13 +143,6 @@ export default function AdminTagsPage() {
           </div>
         )}
       </div>
-
-      <Pagination 
-        page={pagination.page}
-        pageSize={pagination.pageSize}
-        total={pagination.total}
-        onPageChange={handlePageChange}
-      />
 
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
         <DialogContent>
@@ -203,3 +183,4 @@ export default function AdminTagsPage() {
     </div>
   );
 }
+

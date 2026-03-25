@@ -7,7 +7,14 @@ export async function GET() {
       where: { isActive: true },
       orderBy: { order: 'asc' },
     });
-    return NextResponse.json({ code: 0, data: categories });
+
+    const formatted = categories.map(c => ({
+      id: String(c.id),
+      name: c.name,
+      order: c.order,
+    }));
+
+    return NextResponse.json({ code: 0, data: formatted });
   } catch (error) {
     console.error("Error in /api/categories GET:", error);
     const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';

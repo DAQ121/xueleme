@@ -1,85 +1,70 @@
 /**
  * 数据服务层 - 统一数据获取逻辑
+ * USE_API=true 时调用真实后端，false 时使用 mock 数据
  */
 
-import { cardsApi, categoriesApi, favoritesApi, settingsApi } from '@/lib/api'
+import { MOCK_CARDS, MOCK_CATEGORIES } from '@/lib/mock-data'
+import { FOLDER_COLOR_PRESETS } from '@/lib/constants'
+import { cardsApi, categoriesApi, favoritesApi, settingsApi, userApi } from '@/lib/api'
 import type { KnowledgeCard, FavoriteFolder, Category, UserSettings } from '@/lib/types'
-import { getCache, setCache, delCache } from '@/lib/cache'
-import logger from '@/lib/logger'
+
+const USE_API = process.env.NEXT_PUBLIC_USE_API === 'true'
 
 class DataService {
-  private async withCache<T>(key: string, fetcher: () => Promise<T>, ttl = 300): Promise<T> {
-    const cached = await getCache<T>(key)
-    if (cached) return cached
-
-    const data = await fetcher()
-    await setCache(key, data, ttl)
-    return data
-  }
-
-  private async withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
-    for (let i = 0; i < retries; i++) {
-      try {
-        return await fn()
-      } catch (error) {
-        if (i === retries - 1) throw error
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
-      }
-    }
-    throw new Error('Max retries reached')
-  }
-
   async getCards(params: { categoryId?: string; page?: number; pageSize?: number } = {}): Promise<KnowledgeCard[]> {
-    try {
-      const cacheKey = `cards:${JSON.stringify(params)}`
-      return await this.withCache(cacheKey, async () => {
-        const res = await this.withRetry(() => cardsApi.getList(params))
-        return res.list
-      })
-    } catch (error) {
-      logger.error('Failed to get cards', { error, params })
-      throw error
+    if (USE_API) {
+      const res = await cardsApi.getList(params)
+      return res.list
     }
+    if (params.categoryId) {
+      return MOCK_CARDS.filter(card => card.categoryId === params.categoryId)
+    }
+    return MOCK_CARDS
   }
 
   async getCategories(): Promise<Category[]> {
-    try {
-      return await this.withCache('categories', () => this.withRetry(() => categoriesApi.getAll()))
-    } catch (error) {
-      logger.error('Failed to get categories', { error })
-      throw error
+    if (USE_API) {
+      return categoriesApi.getAll()
     }
+    return MOCK_CATEGORIES
   }
 
   async getFavorites(): Promise<FavoriteFolder[]> {
-    try {
-      return await this.withRetry(() => favoritesApi.getAll())
-    } catch (error) {
-      logger.error('Failed to get favorites', { error })
-      throw error
+    if (USE_API) {
+      return favoritesApi.getAll()
     }
+    return this.getInitialFavorites()
   }
 
   async getSettings(): Promise<UserSettings | null> {
-    try {
-      return await this.withRetry(() => settingsApi.get())
-    } catch (error) {
-      logger.error('Failed to get settings', { error })
-      throw error
+    if (USE_API) {
+      return settingsApi.get()
     }
+    return null
   }
 
   async updateSettings(settings: Partial<UserSettings>): Promise<void> {
-    try {
-      await this.withRetry(() => settingsApi.update(settings))
-    } catch (error) {
-      logger.error('Failed to update settings', { error, settings })
-      throw error
+    if (USE_API) {
+      await settingsApi.update(settings)
     }
+    // 非 API 模式下由 storage 层处理
   }
 
-  async invalidateCache(pattern: string): Promise<void> {
-    await delCache(pattern)
+  async getMe() {
+    if (USE_API) {
+      return userApi.getMe()
+    }
+    return null // Return null in mock mode or if not applicable
+  }
+
+  getInitialFavorites(): FavoriteFolder[] {
+    return MOCK_CATEGORIES.map((category, index) => ({
+      ...category,
+      color: FOLDER_COLOR_PRESETS[index % FOLDER_COLOR_PRESETS.length],
+      cardIds: MOCK_CARDS.filter(c => c.categoryId === category.id).map(c => c.id),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }))
   }
 }
 

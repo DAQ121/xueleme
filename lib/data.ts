@@ -7,16 +7,19 @@ const USE_API = process.env.NEXT_PUBLIC_USE_API === 'true'
 
 export async function getCards(categoryId?: string): Promise<KnowledgeCard[]> {
   if (USE_API) {
+    const where: any = { status: 'PUBLISHED' }
+    if (categoryId) {
+      where.categoryId = parseInt(categoryId)
+    }
+
     const cards = await prisma.card.findMany({
-      where: {
-        status: 'PUBLISHED',
-        ...(categoryId ? { categoryId } : {}),
-      },
+      where,
       orderBy: { createdAt: 'desc' },
     })
+
     return cards.map(c => ({
-      id: c.id,
-      categoryId: c.categoryId,
+      id: String(c.id),
+      categoryId: String(c.categoryId),
       content: c.content,
       author: c.author ?? undefined,
       source: c.source ?? undefined,
@@ -28,15 +31,4 @@ export async function getCards(categoryId?: string): Promise<KnowledgeCard[]> {
   let cards = MOCK_CARDS
   if (categoryId) cards = MOCK_CARDS.filter(c => c.categoryId === categoryId)
   return Promise.resolve(cards)
-}
-
-export async function getFavorites(): Promise<FavoriteFolder[]> {
-  const initialFavorites: FavoriteFolder[] = MOCK_CATEGORIES.map((category, index) => ({
-    ...category,
-    color: FOLDER_COLOR_PRESETS[index % FOLDER_COLOR_PRESETS.length],
-    cardIds: MOCK_CARDS.filter(c => c.categoryId === category.id).map(c => c.id),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }))
-  return Promise.resolve(initialFavorites)
 }
