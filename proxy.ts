@@ -8,7 +8,7 @@ export const config = {
   runtime: 'nodejs',
 };
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Rate limiting for API routes
