@@ -3,12 +3,12 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   const [totalCards, totalCategories, totalUsers, totalFeedbacks, publishedCards, pendingFeedbacks] = await Promise.all([
-    prisma.card.count(),
-    prisma.category.count(),
-    prisma.user.count(),
-    prisma.feedback.count(),
-    prisma.card.count({ where: { status: 'PUBLISHED' } }),
-    prisma.feedback.count({ where: { status: 'PENDING' } }),
+    prisma.cards.count(),
+    prisma.categories.count(),
+    prisma.users.count(),
+    prisma.feedbacks.count(),
+    prisma.cards.count({ where: { status: 'PUBLISHED' } }),
+    prisma.feedbacks.count({ where: { status: 'PENDING' } }),
   ])
 
   return NextResponse.json({

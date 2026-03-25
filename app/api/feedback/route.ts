@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ code: 422, message: '反馈内容不能为空' }, { status: 422 })
   }
 
-  const feedback = await prisma.feedback.create({
+  const feedback = await prisma.feedbacks.create({
     data: {
       content: content.trim(),
       ...(userId ? { userId } : {}),

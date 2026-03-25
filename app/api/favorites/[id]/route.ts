@@ -6,7 +6,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params
   const body = await request.json()
 
-  const folder = await prisma.favoriteFolder.update({
+  const folder = await prisma.favorite_folders.update({
     where: { id },
     data: {
       ...(body.name ? { name: body.name } : {}),
@@ -23,6 +23,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 // 删除收藏夹
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  await prisma.favoriteFolder.delete({ where: { id } })
+  await prisma.favorite_folders.delete({ where: { id } })
   return NextResponse.json({ code: 0, data: null })
 }

@@ -13,7 +13,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { name, baseUrl, apiKey, model, temperature, maxTokens, apiType, isDefault } = body
 
     if (isDefault) {
-      await prisma.modelConfig.updateMany({ data: { isDefault: false } })
+      await prisma.model_configs.updateMany({ data: { isDefault: false } })
     }
 
     const data: any = { name, baseUrl, model, temperature, maxTokens, apiType, isDefault }
@@ -21,7 +21,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       data.apiKey = apiKey
     }
 
-    const config = await prisma.modelConfig.update({
+    const config = await prisma.model_configs.update({
       where: { id: parseInt(id, 10) },
       data,
     })
@@ -35,7 +35,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    await prisma.modelConfig.delete({ where: { id: parseInt(id, 10) } })
+    await prisma.model_configs.delete({ where: { id: parseInt(id, 10) } })
     return NextResponse.json({ code: 0, data: null })
   } catch (error: any) {
     return NextResponse.json({ code: 500, message: '删除失败: ' + error.message }, { status: 500 })

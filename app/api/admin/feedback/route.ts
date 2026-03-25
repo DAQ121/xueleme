@@ -12,12 +12,12 @@ export async function GET(request: Request) {
   }
 
   const [list, total] = await Promise.all([
-    prisma.feedback.findMany({
+    prisma.feedbacks.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
-      include: { user: { select: { phone: true, email: true } } },
+      orderBy: { created_at: 'desc' },
+      include: { users: { select: { phone: true, email: true } } },
     }),
-    prisma.feedback.count({ where }),
+    prisma.feedbacks.count({ where }),
   ])
 
   return NextResponse.json({ code: 0, data: { list, total } })

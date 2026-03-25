@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     const userId = await getUserIdFromSession()
     if (!userId) return fail('未登录', 401)
 
-    const folders = await prisma.favoriteFolder.findMany({
+    const folders = await prisma.favorite_folders.findMany({
       where: { userId },
       orderBy: { order: 'asc' },
       select: {
@@ -48,8 +48,8 @@ export async function POST(request: Request) {
     const body = await request.json()
     const validated = createFolderSchema.parse(body)
 
-    const count = await prisma.favoriteFolder.count({ where: { userId } })
-    const folder = await prisma.favoriteFolder.create({
+    const count = await prisma.favorite_folders.count({ where: { userId } })
+    const folder = await prisma.favorite_folders.create({
       data: { userId, ...validated, order: count },
     })
 

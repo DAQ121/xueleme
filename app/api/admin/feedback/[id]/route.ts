@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { status } = await request.json()
-  const feedback = await prisma.feedback.update({
+  const feedback = await prisma.feedbacks.update({
     where: { id },
     data: { status },
   })

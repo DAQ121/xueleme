@@ -14,7 +14,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ message: '标签不能为空' }, { status: 400 })
     }
 
-    const category = await prisma.category.findUnique({ where: { id: categoryId } })
+    const category = await prisma.categories.findUnique({ where: { id: categoryId } })
     if (!category) {
       return NextResponse.json({ message: '分类不存在' }, { status: 404 })
     }
@@ -23,21 +23,21 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const newTags = currentTags.filter(t => t !== tag)
 
     // 找出该分类下含此标签的所有卡片
-    const cards = await prisma.card.findMany({
+    const cards = await prisma.cards.findMany({
       where: { categoryId },
       select: { id: true, tags: true },
     })
 
     // 并行：更新分类标签池 + 清理卡片标签
     await Promise.all([
-      prisma.category.update({
+      prisma.categories.update({
         where: { id: categoryId },
         data: { tags: newTags },
       }),
       ...cards
         .filter(c => (c.tags as string[]).includes(tag))
         .map(c =>
-          prisma.card.update({
+          prisma.cards.update({
             where: { id: c.id },
             data: { tags: (c.tags as string[]).filter(t => t !== tag) },
           })

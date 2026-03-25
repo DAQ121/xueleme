@@ -8,7 +8,7 @@ const scheduledTasks = new Map<number, cron.ScheduledTask>()
 export async function initCron() {
   logger.info('[cron] 初始化定时任务...')
 
-  const categories = await prisma.category.findMany({
+  const categories = await prisma.categories.findMany({
     where: { isScheduled: true, isActive: true, cronExpression: { not: null } },
   })
 

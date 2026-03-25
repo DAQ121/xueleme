@@ -7,10 +7,10 @@ function maskApiKey(key: string) {
 }
 
 export async function GET() {
-  const configs = await prisma.modelConfig.findMany({ orderBy: { createdAt: 'asc' } })
+  const configs = await prisma.model_configs.findMany({ orderBy: { created_at: 'asc' } })
   return NextResponse.json({
     code: 0,
-    data: { list: configs.map(c => ({ ...c, apiKey: maskApiKey(c.apiKey) })) },
+    data: { list: configs.map(c => ({ ...c, api_key: maskApiKey(c.api_key) })) },
   })
 }
 
@@ -24,14 +24,14 @@ export async function POST(request: Request) {
     }
 
     if (isDefault) {
-      await prisma.modelConfig.updateMany({ data: { isDefault: false } })
+      await prisma.model_configs.updateMany({ data: { is_default: false } })
     }
 
-    const config = await prisma.modelConfig.create({
-      data: { name, baseUrl, apiKey, model, temperature: temperature ?? 0.7, maxTokens: maxTokens ?? 2000, apiType: apiType ?? 'OPENAI', isDefault: isDefault ?? false },
+    const config = await prisma.model_configs.create({
+      data: { name, base_url: baseUrl, api_key: apiKey, model, temperature: temperature ?? 0.7, max_tokens: maxTokens ?? 2000, api_type: apiType ?? 'OPENAI', is_default: isDefault ?? false },
     })
 
-    return NextResponse.json({ code: 0, data: { ...config, apiKey: maskApiKey(config.apiKey) } }, { status: 201 })
+    return NextResponse.json({ code: 0, data: { ...config, api_key: maskApiKey(config.api_key) } }, { status: 201 })
   } catch (error: any) {
     return NextResponse.json({ code: 500, message: '创建失败: ' + error.message }, { status: 500 })
   }

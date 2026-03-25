@@ -15,22 +15,22 @@ export async function GET(request: Request) {
   } : {}
 
   const [list, total] = await Promise.all([
-    prisma.user.findMany({
+    prisma.users.findMany({
       where,
       skip: (page - 1) * pageSize,
       take: pageSize,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       select: {
         id: true,
         phone: true,
         email: true,
-        isSubscribed: true,
+        is_subscribed: true,
         role: true,
-        createdAt: true,
-        _count: { select: { favorites: true } },
+        created_at: true,
+        _count: { select: { favorite_folders: true } },
       },
     }),
-    prisma.user.count({ where }),
+    prisma.users.count({ where }),
   ])
 
   return NextResponse.json({ code: 0, data: { list, total, page, pageSize, hasMore: page * pageSize < total } })

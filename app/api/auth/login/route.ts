@@ -8,12 +8,12 @@ export async function POST(request: Request) {
   // In a real application, you would verify the code here.
   // For now, we'll just find or create the user.
 
-  let user = await prisma.user.findUnique({
+  let user = await prisma.users.findUnique({
     where: { phone },
   });
 
   if (!user) {
-    user = await prisma.user.create({
+    user = await prisma.users.create({
       data: { phone },
     });
   }

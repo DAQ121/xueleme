@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    const tags = await prisma.tag.findMany({ orderBy: { name: 'asc' } })
+    const tags = await prisma.tags.findMany({ orderBy: { name: 'asc' } })
     return NextResponse.json({ code: 0, data: tags })
   } catch (error) {
     console.error('Failed to fetch tags:', error)
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ code: 400, message: '标签名称不能为空' }, { status: 400 })
     }
 
-    const tag = await prisma.tag.create({ data: { name } })
+    const tag = await prisma.tags.create({ data: { name } })
     return NextResponse.json({ code: 0, data: tag }, { status: 201 })
   } catch (error) {
     if (error instanceof Error && (error as any).code === 'P2002') {

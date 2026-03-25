@@ -11,7 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ code: 400, message: '参数错误' }, { status: 400 })
     }
 
-    await prisma.cardImpression.createMany({
+    await prisma.card_impressions.createMany({
       data: cardIds.map(cardId => ({ visitorId, cardId: Number(cardId) })),
       skipDuplicates: true,
     })

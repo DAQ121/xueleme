@@ -10,14 +10,14 @@ export async function GET(request: Request) {
   const where = status ? { status: status as any } : undefined
 
   const [list, total] = await Promise.all([
-    prisma.card.findMany({
+    prisma.cards.findMany({
       where,
       skip: (page - 1) * pageSize,
       take: pageSize,
-      orderBy: { createdAt: 'desc' },
-      include: { category: true },
+      orderBy: { created_at: 'desc' },
+      include: { categories: true },
     }),
-    prisma.card.count({ where }),
+    prisma.cards.count({ where }),
   ])
 
   return NextResponse.json({ code: 0, data: { list, total } })
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ code: 400, message: '内容和分类不能为空' }, { status: 400 })
     }
 
-    const card = await prisma.card.create({
+    const card = await prisma.cards.create({
       data: {
         content,
         categoryId,

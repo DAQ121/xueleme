@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validated = loginSchema.parse(body);
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { email: validated.email },
       select: { id: true, email: true, role: true, passwordHash: true },
     });

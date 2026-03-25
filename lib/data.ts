@@ -12,7 +12,7 @@ export async function getCards(categoryId?: string): Promise<KnowledgeCard[]> {
       where.categoryId = parseInt(categoryId)
     }
 
-    const cards = await prisma.card.findMany({
+    const cards = await prisma.cards.findMany({
       where,
       orderBy: { createdAt: 'desc' },
     })

@@ -5,7 +5,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params
   const body = await request.json()
 
-  const user = await prisma.user.update({
+  const user = await prisma.users.update({
     where: { id },
     data: body,
     select: {
@@ -22,6 +22,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  await prisma.user.delete({ where: { id } })
+  await prisma.users.delete({ where: { id } })
   return NextResponse.json({ code: 0, data: null })
 }

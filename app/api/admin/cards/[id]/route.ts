@@ -8,7 +8,7 @@ import logger from '@/lib/logger'
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const card = await prisma.card.findUnique({
+    const card = await prisma.cards.findUnique({
       where: { id: toInt(id) },
       select: {
         id: true,
@@ -38,7 +38,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = await request.json()
     const validated = updateCardSchema.parse(body)
 
-    const card = await prisma.card.update({
+    const card = await prisma.cards.update({
       where: { id: toInt(id) },
       data: validated,
     })
@@ -60,7 +60,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    await prisma.card.delete({ where: { id: toInt(id) } })
+    await prisma.cards.delete({ where: { id: toInt(id) } })
     await clearCachePattern('admin:cards:*')
     await clearCachePattern('cards:*')
     logger.info('Card deleted', { cardId: id })

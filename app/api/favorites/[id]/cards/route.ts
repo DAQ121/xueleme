@@ -6,11 +6,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id: folderId } = await params
   const { cardId } = await request.json()
 
-  const existing = await prisma.favoriteCard.findUnique({
+  const existing = await prisma.favorite_cards.findUnique({
     where: { folderId_cardId: { folderId, cardId } },
   })
   if (existing) return NextResponse.json({ code: 0, data: { message: '已收藏' } })
 
-  await prisma.favoriteCard.create({ data: { folderId, cardId } })
+  await prisma.favorite_cards.create({ data: { folderId, cardId } })
   return NextResponse.json({ code: 0, data: { message: '收藏成功' } })
 }

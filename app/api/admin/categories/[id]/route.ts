@@ -6,7 +6,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params
     const body = await request.json()
     const { name, code, template, isScheduled, cronExpression, order, isActive, tags } = body
-    const category = await prisma.category.update({
+    const category = await prisma.categories.update({
       where: { id: parseInt(id, 10) },
       data: { name, code, template, isScheduled, cronExpression, order, isActive, tags },
     })
@@ -20,7 +20,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    await prisma.category.delete({ where: { id: parseInt(id, 10) } })
+    await prisma.categories.delete({ where: { id: parseInt(id, 10) } })
     return NextResponse.json({ code: 0, data: null }, { status: 200 })
   } catch (error) {
     console.error('Failed to delete category:', error)

@@ -12,15 +12,15 @@ export async function POST(request: Request) {
     if (!where) return NextResponse.json({ message: '必须提供 ids 或 filter' }, { status: 400 })
 
     if (action === 'publish') {
-      const result = await prisma.card.updateMany({ where, data: { status: 'PUBLISHED' } })
+      const result = await prisma.cards.updateMany({ where, data: { status: 'PUBLISHED' } })
       return NextResponse.json({ count: result.count })
     }
     if (action === 'archive') {
-      const result = await prisma.card.updateMany({ where, data: { status: 'ARCHIVED' } })
+      const result = await prisma.cards.updateMany({ where, data: { status: 'ARCHIVED' } })
       return NextResponse.json({ count: result.count })
     }
     if (action === 'delete') {
-      const result = await prisma.card.deleteMany({ where })
+      const result = await prisma.cards.deleteMany({ where })
       return NextResponse.json({ count: result.count })
     }
 

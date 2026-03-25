@@ -3,11 +3,11 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   const [list, total] = await Promise.all([
-    prisma.category.findMany({
+    prisma.categories.findMany({
       orderBy: { order: 'asc' },
       include: { _count: { select: { cards: true } } },
     }),
-    prisma.category.count(),
+    prisma.categories.count(),
   ])
   return NextResponse.json({ code: 0, data: { list, total } })
 }
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ code: 400, message: '分类名称和编码不能为空' }, { status: 400 })
     }
 
-    const category = await prisma.category.create({
+    const category = await prisma.categories.create({
       data: { name, code, template, isScheduled, cronExpression, order: order ?? 0, tags: tags ?? [] },
     })
 
