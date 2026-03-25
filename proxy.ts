@@ -5,7 +5,6 @@ import { rateLimit } from '@/lib/rate-limit';
 
 export const config = {
   matcher: ['/admin/:path*', '/api/admin/:path*'],
-  runtime: 'nodejs',
 };
 
 export function proxy(request: NextRequest) {
