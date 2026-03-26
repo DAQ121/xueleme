@@ -17,7 +17,7 @@ export async function generateForCategory(categoryId: number): Promise<{ generat
   // 并发控制：检查 10 分钟内是否有 RUNNING 状态的同分类任务
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000)
   const running = await prisma.generation_logs.findFirst({
-    where: { categoryId, status: 'RUNNING', createdAt: { gte: tenMinutesAgo } },
+    where: { category_id: categoryId, status: 'RUNNING', created_at: { gte: tenMinutesAgo } },
   })
   if (running) {
     throw new GenerationConflictError('该分类正在生成中，请稍后再试')
@@ -25,36 +25,36 @@ export async function generateForCategory(categoryId: number): Promise<{ generat
 
   // 创建日志记录
   const log = await prisma.generation_logs.create({
-    data: { categoryId, status: 'RUNNING' },
+    data: { category_id: categoryId, status: 'RUNNING' },
   })
 
   try {
     const category = await prisma.categories.findUnique({
       where: { id: categoryId },
-      include: { modelConfig: true },
+      include: { model_configs: true },
     })
 
     if (!category) throw new Error(`分类 ${categoryId} 不存在`)
     if (!category.template) throw new Error('该分类未配置生成模板')
 
     // 取模型配置：优先用分类绑定的，否则取默认
-    let modelConfig = category.modelConfig
+    let modelConfig = category.model_configs
     if (!modelConfig) {
-      modelConfig = await prisma.model_configs.findFirst({ where: { isDefault: true } })
+      modelConfig = await prisma.model_configs.findFirst({ where: { is_default: true } })
     }
     if (!modelConfig) throw new Error('未找到可用的模型配置，请先在「模型配置」中添加并设为默认')
 
     await prisma.generation_logs.update({
       where: { id: log.id },
-      data: { modelConfigId: modelConfig.id },
+      data: { model_config_id: modelConfig.id },
     })
 
     // 根据 apiType 构造请求
-    const baseUrl = modelConfig.baseUrl.replace(/\/$/, '')
+    const baseUrl = modelConfig.base_url.replace(/\/$/, '')
     let apiUrl: string
     let requestBody: object
 
-    if (modelConfig.apiType === 'VOLC_ENGINE') {
+    if (modelConfig.api_type === 'VOLC_ENGINE') {
       apiUrl = baseUrl.endsWith('/responses') ? baseUrl : `${baseUrl}/responses`
       requestBody = {
         model: modelConfig.model,
@@ -68,7 +68,7 @@ export async function generateForCategory(categoryId: number): Promise<{ generat
       requestBody = {
         model: modelConfig.model,
         temperature: modelConfig.temperature,
-        max_tokens: modelConfig.maxTokens,
+        max_tokens: modelConfig.max_tokens,
         messages: [{ role: 'user', content: category.template }],
       }
     }
@@ -83,7 +83,7 @@ export async function generateForCategory(categoryId: number): Promise<{ generat
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${modelConfig.apiKey}`,
+        'Authorization': `Bearer ${modelConfig.api_key}`,
       },
       body: JSON.stringify(requestBody),
     })
@@ -125,12 +125,13 @@ export async function generateForCategory(categoryId: number): Promise<{ generat
     const validCards = cards
       .filter(c => c.content && typeof c.content === 'string' && c.content.trim())
       .map(c => ({
-        categoryId,
+        category_id: categoryId,
         content: c.content.trim(),
         tags: Array.isArray(c.tags)
           ? c.tags.filter(t => categoryTags.length === 0 || categoryTags.includes(t))
           : [],
         status: 'DRAFT' as const,
+        updated_at: new Date(),
       }))
 
     if (validCards.length === 0) throw new Error('模型未返回有效卡片内容')
@@ -139,7 +140,7 @@ export async function generateForCategory(categoryId: number): Promise<{ generat
 
     await prisma.generation_logs.update({
       where: { id: log.id },
-      data: { status: 'SUCCESS', generatedCount: validCards.length },
+      data: { status: 'SUCCESS', generated_count: validCards.length },
     })
 
     logger.info(`[generation] 分类 ${category.name} 生成 ${validCards.length} 张卡片`)
@@ -148,7 +149,7 @@ export async function generateForCategory(categoryId: number): Promise<{ generat
   } catch (error: any) {
     await prisma.generation_logs.update({
       where: { id: log.id },
-      data: { status: 'FAILED', errorMsg: error.message },
+      data: { status: 'FAILED', error_msg: error.message },
     })
     logger.error(`[generation] 分类 ${categoryId} 生成失败`, { error: error.message })
     throw error

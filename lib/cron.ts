@@ -9,11 +9,11 @@ export async function initCron() {
   logger.info('[cron] 初始化定时任务...')
 
   const categories = await prisma.categories.findMany({
-    where: { isScheduled: true, isActive: true, cronExpression: { not: null } },
+    where: { is_scheduled: true, is_active: true, cron_expression: { not: null } },
   })
 
   for (const category of categories) {
-    registerTask(category.id, category.cronExpression!, category.name)
+    registerTask(category.id, category.cron_expression!, category.name)
   }
 
   logger.info(`[cron] 已注册 ${categories.length} 个定时任务`)

@@ -10,6 +10,7 @@ type CardRow = {
   id: number
   content: string
   category_id: number
+  tags: any
   author: string | null
   source: string | null
   created_at: Date
@@ -32,6 +33,7 @@ export async function GET(request: Request) {
         c.id,
         c.content,
         c.category_id,
+        c.tags,
         c.author,
         c.source,
         c.created_at
@@ -53,6 +55,7 @@ export async function GET(request: Request) {
       id: String(row.id),
       categoryId: String(row.category_id),
       content: row.content,
+      tags: Array.isArray(row.tags) ? row.tags : (row.tags ? JSON.parse(row.tags as string) : []),
       author: row.author,
       source: row.source,
       gradient: '',

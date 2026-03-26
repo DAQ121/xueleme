@@ -6,12 +6,12 @@ export async function GET(request: Request) {
   const categoryId = searchParams.get('categoryId')
 
   const logs = await prisma.generation_logs.findMany({
-    where: categoryId ? { categoryId: parseInt(categoryId, 10) } : undefined,
-    orderBy: { createdAt: 'desc' },
+    where: categoryId ? { category_id: parseInt(categoryId, 10) } : undefined,
+    orderBy: { created_at: 'desc' },
     take: 20,
     include: {
-      category: { select: { name: true } },
-      modelConfig: { select: { name: true } },
+      categories: { select: { name: true } },
+      model_configs: { select: { name: true } },
     },
   })
 

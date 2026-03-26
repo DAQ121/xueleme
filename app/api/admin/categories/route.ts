@@ -9,7 +9,17 @@ export async function GET() {
     }),
     prisma.categories.count(),
   ])
-  return NextResponse.json({ code: 0, data: { list, total } })
+
+  // 转换字段名为驼峰
+  const formattedList = list.map(cat => ({
+    ...cat,
+    isScheduled: cat.is_scheduled,
+    cronExpression: cat.cron_expression,
+    isActive: cat.is_active,
+    modelConfigId: cat.model_config_id,
+  }))
+
+  return NextResponse.json({ code: 0, data: { list: formattedList, total } })
 }
 
 export async function POST(request: Request) {

@@ -1,8 +1,19 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Pencil, Trash2, CheckCheck } from 'lucide-react';
+import { Plus, Pencil, Trash2, CheckCheck, Archive, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { CardFormModal } from './components/card-form-modal';
 
 interface Category {
@@ -49,6 +60,8 @@ export default function AdminCardsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [total, setTotal] = useState(0);
   const [batchLoading, setBatchLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id?: number; isBatch?: boolean }>({ open: false });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -90,26 +103,53 @@ export default function AdminCardsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('确定删除这张卡片？')) return;
-    await fetch(`/api/admin/cards/${id}`, { method: 'DELETE' });
-    fetchData();
+    setDeleteDialog({ open: true, id });
   };
 
-  const handleBatchPublish = async () => {
-    if (!confirm('确定将所有草稿卡片一键发布？')) return;
+  const confirmDelete = async () => {
+    const { id, isBatch } = deleteDialog;
+    try {
+      if (isBatch) {
+        await Promise.all(selectedIds.map(cardId => fetch(`/api/admin/cards/${cardId}`, { method: 'DELETE' })));
+        setSelectedIds([]);
+      } else if (id) {
+        await fetch(`/api/admin/cards/${id}`, { method: 'DELETE' });
+      }
+      fetchData();
+    } finally {
+      setDeleteDialog({ open: false });
+    }
+  };
+
+  const handleBatchAction = async (action: 'publish' | 'archive' | 'delete') => {
+    if (selectedIds.length === 0) return;
+
+    if (action === 'delete') {
+      setDeleteDialog({ open: true, isBatch: true });
+      return;
+    }
+
     setBatchLoading(true);
     try {
-      const res = await fetch('/api/admin/cards/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'publish', filter: { status: 'DRAFT' } }),
-      });
-      const d = await res.json();
-      alert(`已发布 ${d.count} 张卡片`);
+      const status = action === 'publish' ? 'PUBLISHED' : 'ARCHIVED';
+      await Promise.all(
+        selectedIds.map(id =>
+          fetch(`/api/admin/cards/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+          })
+        )
+      );
+      setSelectedIds([]);
       fetchData();
     } finally {
       setBatchLoading(false);
     }
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds(selectedIds.length === cards.length ? [] : cards.map(c => c.id));
   };
 
   return (
@@ -117,18 +157,37 @@ export default function AdminCardsPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">卡片管理</h1>
-          <p className="text-sm text-slate-500 mt-1">共 {total} 张卡片</p>
+          <p className="text-sm text-slate-500 mt-1">共 {total} 张卡片 {selectedIds.length > 0 && `· 已选 ${selectedIds.length} 张`}</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleBatchPublish}
-            disabled={batchLoading}
-            className="rounded-xl border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400"
-          >
-            <CheckCheck className="w-4 h-4 mr-1" />
-            {batchLoading ? '发布中...' : '一键发布草稿'}
-          </Button>
+          {selectedIds.length > 0 && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => handleBatchAction('publish')}
+                disabled={batchLoading}
+                className="rounded-xl"
+              >
+                <CheckCheck className="w-4 h-4 mr-1" />发布
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleBatchAction('archive')}
+                disabled={batchLoading}
+                className="rounded-xl"
+              >
+                <Archive className="w-4 h-4 mr-1" />归档
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleBatchAction('delete')}
+                disabled={batchLoading}
+                className="rounded-xl text-red-600 hover:bg-red-50 dark:text-red-400"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />删除
+              </Button>
+            </>
+          )}
           <Button onClick={() => { setEditingCard(null); setIsModalOpen(true); }} className="rounded-xl bg-orange-500 hover:bg-orange-600 text-white">
             <Plus className="w-4 h-4 mr-1" />新增卡片
           </Button>
@@ -158,6 +217,12 @@ export default function AdminCardsPage() {
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 dark:bg-slate-800 text-xs text-slate-500 uppercase">
               <tr>
+                <th className="px-6 py-3 w-12">
+                  <Checkbox
+                    checked={cards.length > 0 && selectedIds.length === cards.length}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </th>
                 <th className="px-6 py-3">内容</th>
                 <th className="px-6 py-3">分类</th>
                 <th className="px-6 py-3">标签</th>
@@ -170,6 +235,14 @@ export default function AdminCardsPage() {
             <tbody>
               {cards.map(card => (
                 <tr key={card.id} className="border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="px-6 py-4">
+                    <Checkbox
+                      checked={selectedIds.includes(card.id)}
+                      onCheckedChange={(checked) => {
+                        setSelectedIds(checked ? [...selectedIds, card.id] : selectedIds.filter(id => id !== card.id));
+                      }}
+                    />
+                  </td>
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white max-w-sm truncate">{card.content}</td>
                   <td className="px-6 py-4">{card.category?.name || 'N/A'}</td>
                   <td className="px-6 py-4 text-xs text-slate-500">{(Array.isArray(card.tags) ? card.tags : []).join(', ')}</td>
@@ -204,6 +277,25 @@ export default function AdminCardsPage() {
           categories={categories}
         />
       )}
+
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteDialog.isBatch
+                ? `确定要删除选中的 ${selectedIds.length} 张卡片吗？此操作无法撤销。`
+                : '确定要删除这张卡片吗？此操作无法撤销。'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

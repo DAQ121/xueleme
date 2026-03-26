@@ -197,10 +197,18 @@ export function CardStack({ categoryId }: CardStackProps) {
                       </p>
                     )}
 
-                    <div className="absolute bottom-6 left-0 right-0 flex justify-center">
-                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                        {CATEGORY_LABELS[currentCard.categoryId] || currentCard.categoryId}
-                      </span>
+                    <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 px-6 flex-wrap">
+                      {currentCard.tags && currentCard.tags.length > 0 ? (
+                        currentCard.tags.map((tag, index) => (
+                          <span key={index} className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
+                            {tag}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                          暂无标签
+                        </span>
+                      )}
                     </div>
                   </div>
 

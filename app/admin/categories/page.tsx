@@ -51,6 +51,7 @@ export default function AdminCategoriesPage() {
   const [logsCategory, setLogsCategory] = useState<Category | null>(null);
   const [logs, setLogs] = useState<GenerationLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
+  const [resultDialog, setResultDialog] = useState<{ open: boolean; success?: boolean; message?: string }>({ open: false });
 
   const fetchCategories = useCallback(async () => {
     setLoading(true);
@@ -83,15 +84,18 @@ export default function AdminCategoriesPage() {
   };
 
   const handleGenerate = async (category: Category) => {
-    if (!category.template) { alert('请先在编辑中配置生成模板（提示词）'); return; }
+    if (!category.template) {
+      setResultDialog({ open: true, success: false, message: '请先在编辑中配置生成模板（提示词）' });
+      return;
+    }
     setGeneratingId(category.id);
     try {
       const res = await fetch(`/api/admin/generate/${category.id}`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-      alert(`✅ 生成成功，共生成 ${data.data.generatedCount} 张卡片（DRAFT 状态）`);
+      setResultDialog({ open: true, success: true, message: `生成成功，共生成 ${data.data.generatedCount} 张卡片（DRAFT 状态）` });
     } catch (error) {
-      alert(`❌ 生成失败：${(error as Error).message}`);
+      setResultDialog({ open: true, success: false, message: `生成失败：${(error as Error).message}` });
     } finally {
       setGeneratingId(null);
     }
@@ -165,7 +169,16 @@ export default function AdminCategoriesPage() {
                         {tags.length === 0 && <span className="text-xs text-slate-400">暂无标签</span>}
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-slate-500 text-xs">{category.isScheduled ? `✅ ${category.cronExpression || ''}` : '❌'}</td>
+                    <td className="px-4 py-4">
+                      {category.isScheduled ? (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs font-medium text-green-600 dark:text-green-400">✅ 已启用</span>
+                          <span className="text-xs text-slate-500 font-mono">{category.cronExpression}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400">❌ 未启用</span>
+                      )}
+                    </td>
                     <td className="px-4 py-4">{category.isActive ? '🟢' : '🔴'}</td>
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-end gap-1">
@@ -247,6 +260,18 @@ export default function AdminCategoriesPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>继续</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={resultDialog.open} onOpenChange={(open) => setResultDialog({ open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{resultDialog.success ? '生成成功' : '生成失败'}</AlertDialogTitle>
+            <AlertDialogDescription>{resultDialog.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>确定</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

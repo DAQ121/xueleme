@@ -20,7 +20,15 @@ export async function GET(request: Request) {
     prisma.cards.count({ where }),
   ])
 
-  return NextResponse.json({ code: 0, data: { list, total } })
+  // 转换字段名以匹配前端
+  const formattedList = list.map(card => ({
+    ...card,
+    category: card.categories,
+    likesCount: card.likes_count,
+    favoritesCount: card.favorites_count,
+  }))
+
+  return NextResponse.json({ code: 0, data: { list: formattedList, total } })
 }
 
 export async function POST(request: Request) {

@@ -1,3 +1,5 @@
+'use client'
+
 import { AppProvider } from '@/lib/app-context'
 import { HomeContent } from '@/components/home-content';
 
