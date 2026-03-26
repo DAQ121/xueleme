@@ -30,6 +30,7 @@ export function CardFormModal({ isOpen, onClose, onSubmit, initialData, categori
   useEffect(() => {
     if (isOpen) {
       const data = initialData || {
+        title: '',
         content: '',
         categoryId: null,
         likesCount: 0,
@@ -78,6 +79,10 @@ export function CardFormModal({ isOpen, onClose, onSubmit, initialData, categori
           <DialogTitle>{initialData ? '编辑卡片' : '新增卡片'}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="title" className="text-right">标题</Label>
+            <Input id="title" name="title" value={formData.title || ''} onChange={handleChange} className="col-span-3" placeholder="可选，简短概括知识点" />
+          </div>
           <div className="grid grid-cols-4 items-start gap-4">
             <Label htmlFor="content" className="text-right pt-2">内容</Label>
             <Textarea id="content" name="content" value={formData.content || ''} onChange={handleChange} className="col-span-3" rows={5} />

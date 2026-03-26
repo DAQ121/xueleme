@@ -9,9 +9,11 @@ export interface Category {
 export interface KnowledgeCard {
   id: string
   categoryId: string
+  title?: string
   content: string
   author?: string
   source?: string
+  tags?: string[]
   gradient: string
   createdAt: string
 }

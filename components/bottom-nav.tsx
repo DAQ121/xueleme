@@ -27,8 +27,8 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-inset-bottom">
       {/* 毛玻璃底栏 */}
-      <div className="bg-background/80 backdrop-blur-2xl border-t border-border/50">
-        <div className="max-w-lg mx-auto flex items-center justify-around h-16 px-2">
+      <div className="mx-4 mb-3 rounded-2xl bg-background/75 backdrop-blur-xl border border-border/40 shadow-sm">
+        <div className="max-w-lg mx-auto flex items-center justify-around h-14 px-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href
             const isFavoritesTab = item.label === '收藏'

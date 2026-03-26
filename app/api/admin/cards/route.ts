@@ -20,7 +20,6 @@ export async function GET(request: Request) {
     prisma.cards.count({ where }),
   ])
 
-  // 转换字段名以匹配前端
   const formattedList = list.map(card => ({
     ...card,
     category: card.categories,

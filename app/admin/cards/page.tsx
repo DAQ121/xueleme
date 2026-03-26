@@ -24,6 +24,7 @@ interface Category {
 
 interface Card {
   id: number;
+  title?: string;
   content: string;
   category: { id: number; name: string };
   tags: string[];
@@ -223,6 +224,7 @@ export default function AdminCardsPage() {
                     onCheckedChange={toggleSelectAll}
                   />
                 </th>
+                <th className="px-6 py-3">标题</th>
                 <th className="px-6 py-3">内容</th>
                 <th className="px-6 py-3">分类</th>
                 <th className="px-6 py-3">标签</th>
@@ -243,6 +245,7 @@ export default function AdminCardsPage() {
                       }}
                     />
                   </td>
+                  <td className="px-6 py-4 text-slate-500 dark:text-slate-400 max-w-[120px] truncate">{card.title || '—'}</td>
                   <td className="px-6 py-4 font-medium text-slate-900 dark:text-white max-w-sm truncate">{card.content}</td>
                   <td className="px-6 py-4">{card.category?.name || 'N/A'}</td>
                   <td className="px-6 py-4 text-xs text-slate-500">{(Array.isArray(card.tags) ? card.tags : []).join(', ')}</td>

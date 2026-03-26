@@ -12,6 +12,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
       where: { id: toInt(id) },
       select: {
         id: true,
+        title: true,
         content: true,
         categoryId: true,
         status: true,

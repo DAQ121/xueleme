@@ -8,6 +8,7 @@ const POOL_SIZE = 20
 
 type CardRow = {
   id: number
+  title: string | null
   content: string
   category_id: number
   tags: any
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
     const listQuery = Prisma.sql`
       SELECT
         c.id,
+        c.title,
         c.content,
         c.category_id,
         c.tags,
@@ -54,6 +56,7 @@ export async function GET(request: Request) {
     const list = rows.map(row => ({
       id: String(row.id),
       categoryId: String(row.category_id),
+      title: row.title ?? undefined,
       content: row.content,
       tags: Array.isArray(row.tags) ? row.tags : (row.tags ? JSON.parse(row.tags as string) : []),
       author: row.author,

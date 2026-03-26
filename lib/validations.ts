@@ -8,6 +8,7 @@ export const loginSchema = z.object({
 
 // Cards
 export const createCardSchema = z.object({
+  title: z.string().optional(),
   content: z.string().min(1),
   categoryId: z.number().int().positive(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),

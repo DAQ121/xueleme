@@ -18,7 +18,7 @@ export function HomeContent() {
 
   return (
     <main className="flex flex-col h-[100dvh] bg-background">
-      <header className="flex items-center justify-center pt-safe px-4 py-2">
+      <header className="flex items-center justify-center px-4 pt-6 pb-1">
         <h1 className="text-lg font-bold">学了么</h1>
       </header>
 
@@ -29,7 +29,7 @@ export function HomeContent() {
 
       <CardStack categoryId={activeCategory} />
 
-      <div className="h-14" />
+      <div className="h-20" />
 
       <BottomNav />
     </main>
