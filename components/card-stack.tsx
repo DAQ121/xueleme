@@ -92,12 +92,7 @@ export function CardStack({ categoryId }: CardStackProps) {
       className="flex-1 relative overflow-hidden flex flex-col"
       style={{ perspective: '1200px' }}
     >
-      {/* 顶部激励语 */}
-      <div className="flex items-center justify-center gap-2 py-1">
-        <Sparkles className="w-3 h-3 text-amber-500/70" />
-        <p className="text-xs font-medium text-muted-foreground/70 tracking-wide">{motivationQuote}</p>
-        <Sparkles className="w-3 h-3 text-amber-500/70" />
-      </div>
+      {/* 顶部激励语 - 移除，避免视觉割裂 */}
 
       {/* 收藏夹侧边栏 */}
       <AnimatePresence>
@@ -176,18 +171,18 @@ export function CardStack({ categoryId }: CardStackProps) {
                 <div className="relative w-full h-full rounded-3xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700">
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400" />
 
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8 pt-10">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
                     {isCardFavorited(currentCard.id) && (
                       <div className="absolute top-5 right-5">
                         <Heart className="w-6 h-6 fill-rose-500 text-rose-500" />
                       </div>
                     )}
 
-                    <div className="absolute top-8 left-6 text-6xl text-slate-200 dark:text-slate-700 font-serif leading-none select-none">
+                    <div className="absolute top-12 left-8 text-5xl text-slate-200 dark:text-slate-700 font-serif leading-none select-none">
                       "
                     </div>
 
-                    <p className="text-lg md:text-xl font-medium leading-relaxed text-center text-balance text-slate-800 dark:text-slate-100 relative z-10">
+                    <p className="text-lg md:text-xl font-medium leading-relaxed text-center text-balance text-slate-800 dark:text-slate-100 relative z-10 mt-2">
                       {currentCard.content}
                     </p>
 
@@ -197,15 +192,15 @@ export function CardStack({ categoryId }: CardStackProps) {
                       </p>
                     )}
 
-                    <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 px-6 flex-wrap">
+                    <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 px-6 flex-wrap">
                       {currentCard.tags && currentCard.tags.length > 0 ? (
                         currentCard.tags.map((tag, index) => (
-                          <span key={index} className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
+                          <span key={index} className="px-4 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/40 dark:to-amber-900/40 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-700/60 shadow-sm">
                             {tag}
                           </span>
                         ))
                       ) : (
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                        <span className="px-4 py-1.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                           暂无标签
                         </span>
                       )}
@@ -228,40 +223,42 @@ export function CardStack({ categoryId }: CardStackProps) {
       </div>
 
       {/* 底部操作提示 */}
-      <div className="flex items-center justify-center gap-3 py-3">
-        <motion.div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/80 dark:bg-slate-800/80"
-          animate={{ y: [0, -2, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
-        >
-          <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 19V5M5 12l7-7 7 7"/>
-          </svg>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400">下一条</span>
-        </motion.div>
-
-        <motion.div
-          className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/30 dark:to-pink-900/30 border border-rose-200/50 dark:border-rose-700/50"
-          animate={{ x: [0, 3, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <svg className="w-4 h-4 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-          <span className="text-[11px] font-medium text-rose-500 dark:text-rose-400">右滑收藏</span>
-          <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400" />
-        </motion.div>
-
-        <motion.div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/80 dark:bg-slate-800/80"
+      <div className="flex items-center justify-center gap-4 py-4">
+        <motion.button
+          onClick={goPrev}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-100/80 dark:bg-slate-800/80 active:scale-95 transition-transform"
           animate={{ y: [0, 2, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
         >
           <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12l7 7 7-7"/>
           </svg>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400">上一条</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">上一条</span>
+        </motion.button>
+
+        <motion.div
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/30 dark:to-pink-900/30 border border-rose-200/50 dark:border-rose-700/50"
+          animate={{ x: [0, 3, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <svg className="w-4 h-4 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+          <span className="text-xs font-medium text-rose-500 dark:text-rose-400">右滑收藏</span>
+          <Heart className="w-4 h-4 text-rose-400 fill-rose-400" />
         </motion.div>
+
+        <motion.button
+          onClick={goNext}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-slate-100/80 dark:bg-slate-800/80 active:scale-95 transition-transform"
+          animate={{ y: [0, -2, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+        >
+          <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+          <span className="text-xs text-slate-500 dark:text-slate-400">下一条</span>
+        </motion.button>
       </div>
     </div>
   )

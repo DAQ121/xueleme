@@ -8,7 +8,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { name, code, template, isScheduled, cronExpression, order, isActive, tags } = body
     const category = await prisma.categories.update({
       where: { id: parseInt(id, 10) },
-      data: { name, code, template, isScheduled, cronExpression, order, isActive, tags },
+      data: {
+        name,
+        code,
+        template,
+        is_scheduled: isScheduled,
+        cron_expression: cronExpression,
+        order,
+        is_active: isActive,
+        tags
+      },
     })
     return NextResponse.json({ code: 0, data: category })
   } catch (error) {
