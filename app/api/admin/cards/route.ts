@@ -42,10 +42,10 @@ export async function POST(request: Request) {
     const card = await prisma.cards.create({
       data: {
         content,
-        categoryId,
+        category_id: categoryId,
         tags: tags || [],
-        likesCount: likesCount || 0,
-        favoritesCount: favoritesCount || 0,
+        likes_count: likesCount || 0,
+        favorites_count: favoritesCount || 0,
         updated_at: new Date(),
       },
     })
