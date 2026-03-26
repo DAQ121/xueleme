@@ -39,9 +39,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const body = await request.json()
     const validated = updateCardSchema.parse(body)
 
+    const { categoryId, ...rest } = validated
+    const data: any = { ...rest, updated_at: new Date() }
+    if (categoryId !== undefined) data.category_id = categoryId
+
     const card = await prisma.cards.update({
       where: { id: toInt(id) },
-      data: validated,
+      data,
     })
 
     await clearCachePattern('admin:cards:*')
