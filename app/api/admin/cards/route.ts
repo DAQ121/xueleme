@@ -46,6 +46,7 @@ export async function POST(request: Request) {
         tags: tags || [],
         likesCount: likesCount || 0,
         favoritesCount: favoritesCount || 0,
+        updated_at: new Date(),
       },
     })
 
