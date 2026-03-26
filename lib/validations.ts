@@ -13,8 +13,8 @@ export const createCardSchema = z.object({
   categoryId: z.number().int().positive(),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
   tags: z.array(z.string()).optional(),
-  author: z.string().optional(),
-  source: z.string().optional(),
+  author: z.string().nullable().optional(),
+  source: z.string().nullable().optional(),
 });
 
 export const updateCardSchema = createCardSchema.partial();
