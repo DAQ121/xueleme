@@ -1,7 +1,7 @@
 'use client'
 
 import { type ReactNode } from 'react'
-import { Toaster } from '@/lib/react-hot-toast'
+import { Toaster } from '@/lib/react-hot-toast.js'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { useHydration } from '@/hooks/use-hydration'
 
