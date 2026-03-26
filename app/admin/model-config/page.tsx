@@ -71,8 +71,8 @@ export default function ModelConfigPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto w-full">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 w-full">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">模型配置</h1>
           <p className="text-sm text-slate-500 mt-1">配置大模型 API，用于定时生成卡片内容</p>
@@ -83,7 +83,7 @@ export default function ModelConfigPage() {
       </div>
 
       {/* 提示词格式说明 */}
-      <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-300">
+      <div className="mb-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm text-amber-800 dark:text-amber-300">
         <p className="font-medium mb-1">生成模板（提示词）格式说明</p>
         <p className="text-xs leading-relaxed">在分类管理的「生成模板」中，要求模型严格输出以下 JSON 格式，系统会自动解析并入库：</p>
         <pre className="mt-2 text-xs bg-amber-100 dark:bg-amber-900/40 rounded p-2 overflow-x-auto">{`[

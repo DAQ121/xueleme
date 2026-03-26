@@ -64,8 +64,8 @@ export default function AdminFeedbackPage() {
   const pendingCount = feedbacks.filter(f => f.status === 'PENDING').length
 
   return (
-    <div className="p-6 max-w-3xl mx-auto w-full">
-      <div className="mb-6">
+    <div className="p-4 w-full">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">反馈管理</h1>
         <p className="text-sm text-slate-500 mt-1">
           共 {feedbacks.length} 条反馈

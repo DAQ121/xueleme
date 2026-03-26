@@ -95,11 +95,11 @@ export function CategoryFormModal({ isOpen, onClose, onSubmit, initialData }: Ca
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[1100px]">
           <DialogHeader>
             <DialogTitle>{initialData ? '编辑分类' : '新增分类'}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-3 py-3">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">分类名称</Label>
               <Input id="name" name="name" value={formData.name || ''} onChange={handleChange} className="col-span-3" />

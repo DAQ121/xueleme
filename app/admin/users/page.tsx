@@ -68,8 +68,8 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto w-full">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 w-full">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">用户管理</h1>
           <p className="text-sm text-slate-500 mt-1">共 {total} 位用户</p>

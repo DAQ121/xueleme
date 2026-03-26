@@ -52,8 +52,8 @@ export default function AdminDashboard() {
   }, [])
 
   return (
-    <div className="p-6 max-w-5xl mx-auto w-full">
-      <div className="mb-6">
+    <div className="p-4 w-full">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Dashboard</h1>
         <p className="text-sm text-slate-500 mt-1">欢迎回来，这是你的内容概览</p>
       </div>

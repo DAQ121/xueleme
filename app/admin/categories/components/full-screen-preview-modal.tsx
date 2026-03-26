@@ -13,7 +13,7 @@ interface FullScreenPreviewModalProps {
 export function FullScreenPreviewModal({ isOpen, onClose, content, onContentChange }: FullScreenPreviewModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-screen h-screen max-w-4xl p-0">
+      <DialogContent className="w-screen h-screen max-w-6xl p-0">
         <div className="flex flex-col h-full">
           <DialogHeader className="p-4 border-b flex-shrink-0">
             <DialogTitle>全屏编辑模板</DialogTitle>

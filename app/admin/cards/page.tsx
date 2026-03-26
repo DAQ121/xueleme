@@ -153,8 +153,8 @@ export default function AdminCardsPage() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto w-full">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 w-full">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">卡片管理</h1>
           <p className="text-sm text-slate-500 mt-1">共 {total} 张卡片 {selectedIds.length > 0 && `· 已选 ${selectedIds.length} 张`}</p>

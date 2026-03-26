@@ -121,8 +121,8 @@ export default function AdminCategoriesPage() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto w-full">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 w-full">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">分类管理</h1>
           <p className="text-sm text-slate-500 mt-1">
