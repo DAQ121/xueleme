@@ -87,9 +87,19 @@ export default function ModelConfigPage() {
         <p className="font-medium mb-1">生成模板（提示词）格式说明</p>
         <p className="text-xs leading-relaxed">在分类管理的「生成模板」中，要求模型严格输出以下 JSON 格式，系统会自动解析并入库：</p>
         <pre className="mt-2 text-xs bg-amber-100 dark:bg-amber-900/40 rounded p-2 overflow-x-auto">{`[
-  {"content": "卡片正文内容，100字以内", "tags": ["标签1", "标签2"]},
-  {"content": "另一张卡片内容", "tags": ["标签1"]}
+  {
+    "title": "卡片标题（可选）",
+    "content": "卡片正文内容，100字以内",
+    "author": "作者或来源（可选）",
+    "tags": ["标签1", "标签2"]
+  },
+  {
+    "content": "另一张卡片内容",
+    "source": "出处（可选，author 和 source 二选一）",
+    "tags": ["标签1"]
+  }
 ]`}</pre>
+        <p className="text-xs mt-2 text-amber-700 dark:text-amber-400">注意：title、author、source 为可选字段，content 和 tags 为必填</p>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">

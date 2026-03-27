@@ -2,7 +2,10 @@ import { prisma } from '@/lib/prisma'
 import logger from '@/lib/logger'
 
 interface GeneratedCard {
+  title?: string
   content: string
+  author?: string
+  source?: string
   tags?: string[]
 }
 
@@ -126,7 +129,10 @@ export async function generateForCategory(categoryId: number): Promise<{ generat
       .filter(c => c.content && typeof c.content === 'string' && c.content.trim())
       .map(c => ({
         category_id: categoryId,
+        title: c.title?.trim() || null,
         content: c.content.trim(),
+        author: c.author?.trim() || null,
+        source: c.source?.trim() || null,
         tags: Array.isArray(c.tags)
           ? c.tags.filter(t => categoryTags.length === 0 || categoryTags.includes(t))
           : [],

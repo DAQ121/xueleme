@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Crown, 
+import {
+  Crown,
   Sparkles,
-  MessageSquare, 
+  MessageSquare,
   Phone,
   Moon,
   Sun,
@@ -15,13 +15,20 @@ import {
   Check,
   Infinity,
   Settings2,
-  Send
+  Send,
+  Plus,
+  FileText
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { FloatingCloseButton } from '@/components/ui/floating-close-button'
 import { BottomNav } from '@/components/bottom-nav'
 import { AppProvider } from '@/lib/app-context'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { X } from 'lucide-react'
 
 
 
@@ -364,6 +371,160 @@ function ContactPage({ onBack }: { onBack: () => void }) {
   )
 }
 
+// 发布卡片页面
+function PublishCardPage({ onBack }: { onBack: () => void }) {
+  const [categories, setCategories] = useState<any[]>([])
+  const [formData, setFormData] = useState({ content: '', categoryId: null as number | null })
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    fetch('/api/admin/categories')
+      .then(res => res.json())
+      .then(data => setCategories(data.data?.list || []))
+      .catch(() => setError('加载分类失败'))
+  }, [])
+
+  const currentCategoryTags = categories.find(c => c.id === formData.categoryId)?.tags ?? []
+
+  const handleSubmit = async () => {
+    if (!formData.content.trim() || !formData.categoryId) {
+      setError('请填写内容并选择分类')
+      return
+    }
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch('/api/admin/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, tags: selectedTags, status: 'DRAFT' }),
+      })
+      if (!res.ok) throw new Error('发布失败')
+      setSubmitted(true)
+      setTimeout(() => onBack(), 1500)
+    } catch {
+      setError('发布失败，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  }
+
+  return (
+    <motion.div
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '100%' }}
+      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+      className="fixed inset-0 bg-slate-50 dark:bg-slate-900 z-50"
+    >
+      <div className="flex flex-col h-full pt-safe">
+        <header className="flex items-center justify-between px-4 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+          <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">发布卡片</h1>
+          <button onClick={onBack} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
+            <XCircle className="w-5 h-5 text-slate-500" />
+          </button>
+        </header>
+
+        <div className="flex-1 p-4 overflow-y-auto">
+          {submitted ? (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="flex flex-col items-center justify-center h-full gap-4"
+            >
+              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Check className="w-8 h-8 text-green-500" />
+              </div>
+              <p className="text-lg font-medium text-slate-700 dark:text-slate-200">发布成功!</p>
+              <p className="text-sm text-slate-500">卡片已保存为草稿</p>
+            </motion.div>
+          ) : (
+            <div className="space-y-4 max-w-2xl mx-auto">
+              <div>
+                <Textarea
+                  id="content"
+                  value={formData.content}
+                  onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                  placeholder="输入卡片内容..."
+                  className="rounded-xl min-h-[200px] text-lg leading-relaxed"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="category" className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 block">分类</Label>
+                <Select
+                  onValueChange={(value) => {
+                    const newCategoryId = parseInt(value, 10)
+                    const newCategoryTags = categories.find(c => c.id === newCategoryId)?.tags ?? []
+                    setFormData(prev => ({ ...prev, categoryId: newCategoryId }))
+                    setSelectedTags(prev => prev.filter(t => newCategoryTags.includes(t)))
+                  }}
+                  value={formData.categoryId?.toString()}
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="选择一个分类" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.categoryId && currentCategoryTags.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium text-slate-700 dark:text-slate-200 mb-2 block">标签</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {currentCategoryTags.map(tag => {
+                      const selected = selectedTags.includes(tag)
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => toggleTag(tag)}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                            selected
+                              ? 'bg-orange-500 text-white border-orange-500'
+                              : 'bg-white text-slate-600 border-slate-200 hover:border-orange-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                          }`}
+                        >
+                          {selected && <X className="w-3 h-3" />}
+                          {tag}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {error && <p className="text-sm text-red-500">{error}</p>}
+
+              <Button
+                onClick={handleSubmit}
+                disabled={loading || !formData.content.trim() || !formData.categoryId}
+                className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium"
+              >
+                <Send className="w-4 h-4 mr-2" />
+                {loading ? '发布中...' : '发布卡片'}
+              </Button>
+
+              <p className="text-xs text-slate-400 text-center">卡片将保存为草稿状态，需要后台审核后才会展示</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 // 关于我们页面
 function AboutPage({ onBack }: { onBack: () => void }) {
   return (
@@ -412,7 +573,7 @@ function AboutPage({ onBack }: { onBack: () => void }) {
 }
 
 function ProfileContent() {
-  const [currentPage, setCurrentPage] = useState<'main' | 'feedback' | 'contact' | 'about'>('main')
+  const [currentPage, setCurrentPage] = useState<'main' | 'feedback' | 'contact' | 'about' | 'publish'>('main')
   const [showSubscription, setShowSubscription] = useState(false)
   const [isSubscribed] = useState(false) // 订阅状态
 
@@ -466,22 +627,32 @@ function ProfileContent() {
         </div>
 
         {/* 菜单列表 - 第二组 */}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-slate-700/50 mb-4">
+          <MenuItem
+            icon={Plus}
+            label="发布卡片"
+            color="#f97316"
+            onClick={() => setCurrentPage('publish')}
+          />
+        </div>
+
+        {/* 菜单列表 - 第三组 */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-slate-700/50">
-          <MenuItem 
-            icon={MessageSquare} 
-            label="意见反馈" 
+          <MenuItem
+            icon={MessageSquare}
+            label="意见反馈"
             color="#22c55e"
             onClick={() => setCurrentPage('feedback')}
           />
-          <MenuItem 
-            icon={Phone} 
-            label="联系我们" 
+          <MenuItem
+            icon={Phone}
+            label="联系我们"
             color="#3b82f6"
             onClick={() => setCurrentPage('contact')}
           />
-          <MenuItem 
-            icon={Sparkles} 
-            label="关于我们" 
+          <MenuItem
+            icon={Sparkles}
+            label="关于我们"
             color="#8b5cf6"
             onClick={() => setCurrentPage('about')}
           />
@@ -498,6 +669,9 @@ function ProfileContent() {
 
       {/* 子页面 */}
       <AnimatePresence>
+        {currentPage === 'publish' && (
+          <PublishCardPage onBack={() => setCurrentPage('main')} />
+        )}
         {currentPage === 'feedback' && (
           <FeedbackPage onBack={() => setCurrentPage('main')} />
         )}

@@ -197,77 +197,76 @@ export function CardStack({ categoryId }: CardStackProps) {
                 <div className="relative w-full h-full rounded-3xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700">
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400" />
 
-                  <div className="absolute inset-0 flex flex-col p-8 pt-10">
-                    {/* 顶部：分类 badge + 收藏心形 */}
-                    <div className="flex items-center justify-between mb-4">
-                      {getCategoryName(currentCard.categoryId) && (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 border border-violet-200/60 dark:border-violet-700/60">
-                          {getCategoryName(currentCard.categoryId)}
-                        </span>
-                      )}
-                      {isCardFavorited(currentCard.id) && (
-                        <Heart className="w-5 h-5 fill-rose-500 text-rose-500 ml-auto" />
-                      )}
-                    </div>
-
-                    {/* 中间：引号装饰 + 标题 + 正文 */}
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                      <div className="self-start text-5xl text-slate-200 dark:text-slate-700 font-serif leading-none select-none -mb-4">
-                        "
-                      </div>
-
-                      {currentCard.title && (
-                        <p className="text-sm font-bold text-sky-500 dark:text-sky-400 text-center mb-3 relative z-10 tracking-wide">
-                          {currentCard.title}
-                        </p>
-                      )}
-
-                      <p className="text-lg md:text-xl font-medium leading-relaxed text-center text-balance text-slate-800 dark:text-slate-100 relative z-10">
-                        {currentCard.content}
+                  {/* 标题 - 左上角 */}
+                  {currentCard.title && (
+                    <div className="absolute top-24 left-8">
+                      <p className="text-xl md:text-2xl font-bold text-sky-500 dark:text-sky-400 tracking-wide">
+                        {currentCard.title}
                       </p>
+                    </div>
+                  )}
 
-                      {(currentCard.author || currentCard.source) && (
-                        <p className="mt-5 text-sm text-slate-500 dark:text-slate-400 font-medium">
-                          —— {currentCard.author || currentCard.source}
-                        </p>
-                      )}
+                  {/* 收藏心形 - 右上角 */}
+                  {isCardFavorited(currentCard.id) && (
+                    <div className="absolute top-12 right-8">
+                      <Heart className="w-5 h-5 fill-rose-500 text-rose-500" />
+                    </div>
+                  )}
+
+                  {/* 中间：引号装饰 + 正文 */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center px-5">
+                    <div className="self-start text-5xl text-slate-200 dark:text-slate-700 font-serif leading-none select-none -mb-4">
+                      "
                     </div>
 
-                    {/* 底部：标签（左）+ 操作按钮（右） */}
-                    <div className="flex items-end justify-between mt-4 gap-2">
-                      {/* 标签 */}
-                      <div className="flex gap-1.5 flex-wrap flex-1">
-                        {currentCard.tags && currentCard.tags.map((tag, index) => {
-                          const colors = [
-                            'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/60',
-                            'bg-sky-50 text-sky-600 border-sky-200/60 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-700/60',
-                            'bg-amber-50 text-amber-600 border-amber-200/60 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/60',
-                          ]
-                          return (
-                            <span key={index} className={`px-2.5 py-1 rounded-full text-xs font-medium border shadow-sm ${colors[index % colors.length]}`}>
-                              {tag}
-                            </span>
-                          )
-                        })}
-                      </div>
+                    <p className="text-xl md:text-2xl font-medium leading-relaxed text-center text-balance text-slate-800 dark:text-slate-100">
+                      {currentCard.content}
+                    </p>
+                  </div>
 
-                      {/* 分享 + 复制 */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={handleShare}
-                          className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/30 active:scale-90 transition-all"
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={handleCopy}
-                          className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/30 active:scale-90 transition-all"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                      </div>
+                  {/* 底部：标签（左）+ 操作按钮（右） */}
+                  <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between gap-2">
+                    {/* 标签 */}
+                    <div className="flex gap-1.5 flex-wrap flex-1">
+                      {currentCard.tags && currentCard.tags.map((tag, index) => {
+                        const colors = [
+                          'bg-emerald-50 text-emerald-600 border-emerald-200/60 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700/60',
+                          'bg-sky-50 text-sky-600 border-sky-200/60 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-700/60',
+                          'bg-amber-50 text-amber-600 border-amber-200/60 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700/60',
+                        ]
+                        return (
+                          <span key={index} className={`px-2.5 py-1 rounded-full text-xs font-medium border shadow-sm ${colors[index % colors.length]}`}>
+                            {tag}
+                          </span>
+                        )
+                      })}
+                    </div>
+
+                    {/* 分享 + 复制 */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={handleShare}
+                        className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/30 active:scale-90 transition-all"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={handleCopy}
+                        className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/30 active:scale-90 transition-all"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
+
+                  {/* 出处 - 右下角 */}
+                  {(currentCard.author || currentCard.source) && (
+                    <div className="absolute bottom-30 right-15">
+                      <p className="text-xl md:text-2xl text-slate-500 dark:text-slate-400 font-medium">
+                        —— {currentCard.author || currentCard.source}
+                      </p>
+                    </div>
+                  )}
 
                   <motion.div
                     className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-rose-500/20 to-pink-500/20 pointer-events-none rounded-3xl"
